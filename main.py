@@ -15,6 +15,7 @@ def alpha(n,m,i,j):
         return 0
     
 
+
 def hamiltonian_spin_interaction_component(alpha, n, m, i, j, N):
     """
     Generates a component of the hamiltonian due to a two spins interacting. 
@@ -57,11 +58,12 @@ def hamiltonian_spin_bias_component(beta, n, i, N):
 
     return beta*tensor(fst+[sigma[i]]+sec)
 
-def hamiltonian(alpha, N):
+def hamiltonian(alpha,beta,N):
     """
     Creates the hamiltonian for a given alpha function that specifies the structure of the system.
 
     Params: alpha - specifies the structure of the system and how a given particle interacts with others and the enviroment
+            beta - specifes how each individual atom interacts with an external field/interaction
             N - number of particles 
 
     Returns: Hamiltonian Matrix
@@ -73,10 +75,13 @@ def hamiltonian(alpha, N):
         if n!=m:
             spin_components.append(hamiltonian_spin_interaction_component(alpha(n,m,i,j),n,m,i,j,N))
 
+    for n,i in product(range(N),range(N)):
+        spin_components.append(hamiltonian_spin_bias_component(beta(n,i),n,i,N))
+     
     return sum(spin_components)
     
     
 
-print(hamiltonian(alpha,6))
+print(hamiltonian(alpha,lambda n,i: 0, 2))
 
 
