@@ -1,15 +1,22 @@
-from qutip import sigmax, sigmay, sigmaz, identity
-from qutip import tensor
-from numpy import array, zeros
+from qutip import sigmax, sigmay, sigmaz, identity, tensor
+from qutip.mesolve import mesolve
+from qutip.essolve import essolve
+from qutip.states import basis
+from numpy import linspace
 from itertools import product
+from time import time
+from matplotlib import pyplot as plt
 
 
 sigma = [sigmax(),sigmay(),sigmaz()]
 
-
+#TODO FIX MEMORY ERROR by replacing sum(list) with iteration sum
+#TODO watch system equilibrate
+#TODO effective dimension = 1/prob(En)**2 -> large for equilibration
 
 def alpha(n,m,i,j):
-    if (m-n)==1:
+    
+    if (m-n)==1 and i==j:
         return 1
     else:
         return 0
@@ -43,7 +50,7 @@ def hamiltonian_spin_interaction_component(alpha, n, m, i, j, N):
     
     return alpha*tensor(operators)
 
-def hamiltonian_spin_bias_component(beta, n, i, N):
+def hamiltonian_spin_on_site_component(beta, n, i, N):
     """
     Generates a component of the hamiltonian due to a spin interacting with an enviromental bias. 
     
@@ -75,13 +82,21 @@ def hamiltonian(alpha,beta,N):
         if n!=m:
             spin_components.append(hamiltonian_spin_interaction_component(alpha(n,m,i,j),n,m,i,j,N))
 
-    for n,i in product(range(N),range(N)):
-        spin_components.append(hamiltonian_spin_bias_component(beta(n,i),n,i,N))
+    for n,i in product(range(N),range(3)):
+        spin_components.append(hamiltonian_spin_on_site_component(beta(n,i),n,i,N))
      
     return sum(spin_components)
-    
-    
 
-print(hamiltonian(alpha,lambda n,i: 0, 2))
 
+
+#example way to evolve a state with qutip can also use essolve 
+H = hamiltonian(alpha,lambda n,i: 1, 4)
+times = linspace(0,5,20)
+psi0 = tensor(basis(2,1),basis(2,0),basis(2,1),basis(2,0))
+
+result = mesolve(H,psi0,times,[],[tensor(sigmax(),identity(2),identity(2),identity(2))])
+evalues = result.expect[0]
+
+plt.plot(times,evalues)
+plt.show()
 
