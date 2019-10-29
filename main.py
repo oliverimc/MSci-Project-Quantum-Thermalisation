@@ -1,14 +1,23 @@
 from qutip import sigmax, sigmay, sigmaz, identity, tensor
 from qutip.mesolve import mesolve
 from qutip.essolve import essolve
+
 from qutip.states import basis
+
 from numpy import linspace
 from itertools import product
 from time import time
 from matplotlib import pyplot as plt
 
+#   |____                         ___
+#   |___         ---------          |
+#   |   |        ---------          | 
+#   |   |                        ___|___
+# hbar ==1   
+
 
 sigma = [sigmax(),sigmay(),sigmaz()]
+
 
 #TODO FIX MEMORY ERROR by replacing sum(list) with iteration sum
 #TODO watch system equilibrate
@@ -17,7 +26,7 @@ sigma = [sigmax(),sigmay(),sigmaz()]
 def alpha(n,m,i,j):
     
     if (m-n)==1 and i==j:
-        return 1
+        return [0,2,1][i]
     else:
         return 0
     
@@ -66,6 +75,7 @@ def hamiltonian_spin_on_site_component(beta, n, i, N):
     return beta*tensor(fst+[sigma[i]]+sec)
 
 def hamiltonian(alpha,beta,N):
+    
     """
     Creates the hamiltonian for a given alpha function that specifies the structure of the system.
 
@@ -90,13 +100,14 @@ def hamiltonian(alpha,beta,N):
 
 
 #example way to evolve a state with qutip can also use essolve 
-H = hamiltonian(alpha,lambda n,i: 1, 4)
-times = linspace(0,5,20)
-psi0 = tensor(basis(2,1),basis(2,0),basis(2,1),basis(2,0))
+H = hamiltonian(alpha,lambda n,i: 0, 3)
+psi0 = tensor(basis(2,1),basis(2,0),basis(2,0))
+times = linspace(0,1,10)
 
-result = mesolve(H,psi0,times,[],[tensor(sigmax(),identity(2),identity(2),identity(2))])
-evalues = result.expect[0]
 
-plt.plot(times,evalues)
-plt.show()
+
+result = mesolve(H,psi0,times,[],[])
+
+print(result.states)
+
 
