@@ -103,9 +103,6 @@ def hamiltonian(alpha,beta,N):
 H = hamiltonian(alpha,lambda n,i: 0, 3)
 psi0 = tensor(basis(2,1),basis(2,0),basis(2,0))
 times = linspace(0,1,10)
-
-
-
 result = mesolve(H,psi0,times,[],[])
 
 print(result.states)
