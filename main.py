@@ -24,36 +24,35 @@ sigma = [sigmax(),sigmay(),sigmaz()]
 #TODO watch system equilibrate
 #TODO effective dimension = 1/prob(En)**2 -> large for equilibration
 
-def Heisenberg1dRingGen(n,m,i,j,Jx,Jy,Jz,N)
+def Heisenberg1dRingGen(Jx,Jy,Jz,N):
     
-    def return_func(n,m,i,j,N):
+    def return_func(n,m,i,j):
         if (i==j):
             if(abs(n-m)==1):
                 return -1/2*[Jx,Jy,Jz][i]
             if((n+m)==(N-1)):
                 return -1/2*[Jx,Jy,Jz][i]
+        return 0
     
     return return_func
 
 
-def Heisenberg1dChainGen(n,m,i,j,Jx,Jy,Jz,N)
+def Heisenberg1dChainGen(Jx,Jy,Jz,N):
 
-     def return_func(n,m,i,j,N):
+    def return_func(n,m,i,j):
         if (i==j):
             if(abs(n-m)==1):
                 return -1/2*[Jx,Jy,Jz][i]
+        return 0
     
     return return_func
 
 
+#depreceated
+alpha = Heisenberg1dChainGen(0,0,1,3)
 
-def alpha(n,m,i,j):
-    
-    if (m-n)==1 and i==j:
-        return [0,2,1][i]
-    else:
-        return 0
-    
+
+
 def eff_dim(dens_oper):
     """
     Returns effective dimension of mixed state:
@@ -86,7 +85,7 @@ def hamiltonian_spin_interaction_component(alpha, n, m, i, j, N):
     sec_section = [identity(2)]*(big_index-small_index-1)
     thrd_section = [identity(2)]*(N-big_index-1)
     operators = fst_section+[sigma[i]]+sec_section+[sigma[j]]+thrd_section
-    
+
     return alpha*tensor(operators)
 
 def hamiltonian_spin_on_site_component(beta, n, i, N):
@@ -120,7 +119,7 @@ def hamiltonian(alpha,beta,N):
 
     for n,m,i,j in product(range(N),range(N),range(3),range(3)):
         if n!=m:
-            spin_components.append(hamiltonian_spin_interaction_component(alpha(n,m,i,j,N),n,m,i,j,N))
+            spin_components.append(hamiltonian_spin_interaction_component(alpha(n,m,i,j),n,m,i,j,N))
 
     for n,i in product(range(N),range(3)):
         spin_components.append(hamiltonian_spin_on_site_component(beta(n,i),n,i,N))
@@ -128,16 +127,18 @@ def hamiltonian(alpha,beta,N):
     return sum(spin_components)
 
 
-"""
+
 #example way to evolve a state with qutip can also use essolve 
 H = hamiltonian(alpha,lambda n,i: 0, 3)
+
+print(H)
+
 psi0 = tensor(basis(2,1),basis(2,0),basis(2,0))
 times = linspace(0,1,10)
 result = mesolve(H,psi0,times,[],[])
 
 print(result.states)
 """
-
 psi:Qobj = tensor(basis(2,0),basis(2,0))
 
 
@@ -149,3 +150,4 @@ p2 = ket2dm(psi1)
 
 print(tracedist(psi1,psi0))
 
+"""
