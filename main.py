@@ -1,8 +1,9 @@
 from qutip import sigmax, sigmay, sigmaz, identity, tensor
 from qutip.mesolve import mesolve
 from qutip.essolve import essolve
-
-from qutip.states import basis
+from qutip import Qobj
+from qutip.metrics import tracedist
+from qutip.states import basis,ket2dm
 
 from numpy import linspace
 from itertools import product
@@ -30,7 +31,13 @@ def alpha(n,m,i,j):
     else:
         return 0
     
-
+def eff_dim(dens_oper):
+    """
+    Returns effective dimension of mixed state:
+    Via formula 1/Tr(rho^2)
+    
+    """
+    return 1/((dens_oper**2).tr())
 
 def hamiltonian_spin_interaction_component(alpha, n, m, i, j, N):
     """
@@ -98,7 +105,7 @@ def hamiltonian(alpha,beta,N):
     return sum(spin_components)
 
 
-
+"""
 #example way to evolve a state with qutip can also use essolve 
 H = hamiltonian(alpha,lambda n,i: 0, 3)
 psi0 = tensor(basis(2,1),basis(2,0),basis(2,0))
@@ -106,5 +113,16 @@ times = linspace(0,1,10)
 result = mesolve(H,psi0,times,[],[])
 
 print(result.states)
+"""
 
+psi:Qobj = tensor(basis(2,0),basis(2,0))
+
+
+psi0 = tensor(basis(2,0),basis(2,1))
+psi1 = tensor(basis(2,0),basis(2,0))
+
+p1 = ket2dm(psi0)
+p2 = ket2dm(psi1)
+
+print(tracedist(psi1,psi0))
 
