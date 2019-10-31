@@ -24,6 +24,29 @@ sigma = [sigmax(),sigmay(),sigmaz()]
 #TODO watch system equilibrate
 #TODO effective dimension = 1/prob(En)**2 -> large for equilibration
 
+def Heisenberg1dRingGen(n,m,i,j,Jx,Jy,Jz,N)
+    
+    def return_func(n,m,i,j,N):
+        if (i==j):
+            if(abs(n-m)==1):
+                return -1/2*[Jx,Jy,Jz][i]
+            if((n+m)==(N-1)):
+                return -1/2*[Jx,Jy,Jz][i]
+    
+    return return_func
+
+
+def Heisenberg1dChainGen(n,m,i,j,Jx,Jy,Jz,N)
+
+     def return_func(n,m,i,j,N):
+        if (i==j):
+            if(abs(n-m)==1):
+                return -1/2*[Jx,Jy,Jz][i]
+    
+    return return_func
+
+
+
 def alpha(n,m,i,j):
     
     if (m-n)==1 and i==j:
@@ -97,7 +120,7 @@ def hamiltonian(alpha,beta,N):
 
     for n,m,i,j in product(range(N),range(N),range(3),range(3)):
         if n!=m:
-            spin_components.append(hamiltonian_spin_interaction_component(alpha(n,m,i,j),n,m,i,j,N))
+            spin_components.append(hamiltonian_spin_interaction_component(alpha(n,m,i,j,N),n,m,i,j,N))
 
     for n,i in product(range(N),range(3)):
         spin_components.append(hamiltonian_spin_on_site_component(beta(n,i),n,i,N))
