@@ -7,8 +7,12 @@ from qutip.states import basis,ket2dm
 
 from numpy import linspace
 from itertools import product
+from tqdm import tqdm
 from time import time
 from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.tri as mtri
+
 
 #   |____                         ___
 #   |___         ---------          |
@@ -30,7 +34,7 @@ def Heisenberg1dRingGen(Jx,Jy,Jz,N):
         if (i==j):
             if(abs(n-m)==1):
                 return -1/2*[Jx,Jy,Jz][i]
-            if((n+m)==(N-1)):
+            if((n==(N-1) and m==0) or (n==0 and m==(N-1))):
                 return -1/2*[Jx,Jy,Jz][i]
         return 0
     
@@ -47,9 +51,9 @@ def Heisenberg1dChainGen(Jx,Jy,Jz,N):
     
     return return_func
 
-
+n=7
 #depreceated
-alpha = Heisenberg1dChainGen(0,0,1,3)
+alpha = Heisenberg1dRingGen(1,1,1,n)
 
 
 
@@ -60,6 +64,8 @@ def eff_dim(dens_oper):
     
     """
     return 1/((dens_oper**2).tr())
+
+
 
 def hamiltonian_spin_interaction_component(alpha, n, m, i, j, N):
     """
@@ -127,27 +133,46 @@ def hamiltonian(alpha,beta,N):
     return sum(spin_components)
 
 
+def energy_trace_dist_compare(Hamiltonian:Qobj):
+    E =[]
+    Eprime =[]
+    tdist =[]
+    energies, states = H.eigenstates()
+    for energy1, energy2 in tqdm(product(zip(energies,states),zip(energies,states))):
+        if energy1!=energy2:
+            d1 = ket2dm(energy1[1])
+            d2 = ket2dm(energy2[1])
+            rd1 = d1.ptrace(0)
+            rd2 = d2.ptrace(0)
+            E.append(energy1[0])
+            Eprime.append(energy2[0])
+            tdist.append(tracedist(rd1,rd2))
+    
+    fig = plt.figure(figsize=plt.figaspect(0.5))
+    tri = mtri.Triangulation(E, Eprime)
+    ax = fig.add_subplot(1,1,1, projection='3d')
+    ax.plot_trisurf(E,Eprime,tdist)
+    plt.show()
+
+        
+        
+    
+
+
+
+
+
+
 
 #example way to evolve a state with qutip can also use essolve 
-H = hamiltonian(alpha,lambda n,i: 0, 3)
+H = hamiltonian(alpha,lambda n,i: 0, n)
 
-print(H)
+energy_trace_dist_compare(H)
+
+
 
 psi0 = tensor(basis(2,1),basis(2,0),basis(2,0))
 times = linspace(0,1,10)
 result = mesolve(H,psi0,times,[],[])
 
-print(result.states)
-"""
-psi:Qobj = tensor(basis(2,0),basis(2,0))
 
-
-psi0 = tensor(basis(2,0),basis(2,1))
-psi1 = tensor(basis(2,0),basis(2,0))
-
-p1 = ket2dm(psi0)
-p2 = ket2dm(psi1)
-
-print(tracedist(psi1,psi0))
-
-"""
