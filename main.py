@@ -26,7 +26,7 @@ sigma = [sigmax(),sigmay(),sigmaz()]
 
 #TODO FIX MEMORY ERROR by replacing sum(list) with iteration sum
 #TODO watch system equilibrate
-#TODO effective dimension = 1/prob(En)**2 -> large for equilibration
+
 
 def Heisenberg1dRingGen(Jx,Jy,Jz,N):
     
