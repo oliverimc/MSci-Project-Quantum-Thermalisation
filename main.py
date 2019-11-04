@@ -4,14 +4,18 @@ from qutip.essolve import essolve
 from qutip import Qobj
 from qutip.metrics import tracedist
 from qutip.states import basis,ket2dm
+from qutip import Options
 
-from numpy import linspace
-from itertools import product
+from numpy import linspace,array
+from numpy.random import normal
 from tqdm import tqdm
-from time import time
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as mtri
+
+from time import time
+from itertools import product
+
 
 
 #   |____                         ___
@@ -40,7 +44,6 @@ def Heisenberg1dRingGen(Jx,Jy,Jz,N):
     
     return return_func
 
-
 def Heisenberg1dChainGen(Jx,Jy,Jz,N):
 
     def return_func(n,m,i,j):
@@ -51,21 +54,42 @@ def Heisenberg1dChainGen(Jx,Jy,Jz,N):
     
     return return_func
 
-n=7
-#depreceated
-alpha = Heisenberg1dRingGen(1,1,1,n)
+def random_hamiltonian(n,m,i,j):
+    return normal()
 
 
+def basis_vectors(n):
+    """
+    Generator that yields the basis vectors
+    with correct tensor dimensional form 
+    """
 
-def eff_dim(dens_oper):
+    single_vectors = [basis(2,0),basis(2,1)]
+    for selection in product(*([single_vectors]*n)):
+        yield tensor(*selection)
+
+def eff_dim(dens_oper:Qobj):
     """
     Returns effective dimension of mixed state:
     Via formula 1/Tr(rho^2)
     
     """
-    return 1/((dens_oper**2).tr())
+    dens_oper_sq = dens_oper**2
+    return 1/(dens_oper_sq.tr())
 
+def gen_random_state(n):
+    """
+    Generate a random state
+    of an n particle system.
+    => dimension 2^n"
+    """
+    state = sum([complex(normal(),normal())*vector for vector in basis_vectors(n)])
+    return state.unit()
 
+def get_equilibrated_dens_op(hamiltonian:Qobj, init_state:Qobj):
+    energys,states = hamiltonian.eigenstates()
+    return sum([abs(state.overlap(init_state)**2)*state*state.dag() for state in states])
+   
 
 def hamiltonian_spin_interaction_component(alpha, n, m, i, j, N):
     """
@@ -133,46 +157,60 @@ def hamiltonian(alpha,beta,N):
     return sum(spin_components)
 
 
-def energy_trace_dist_compare(Hamiltonian:Qobj):
+def energy_trace_dist_compare(hamiltonian:Qobj):
+    
     E =[]
     Eprime =[]
-    tdist =[]
-    energies, states = H.eigenstates()
-    for energy1, energy2 in tqdm(product(zip(energies,states),zip(energies,states))):
-        if energy1!=energy2:
-            d1 = ket2dm(energy1[1])
-            d2 = ket2dm(energy2[1])
-            rd1 = d1.ptrace(0)
-            rd2 = d2.ptrace(0)
-            E.append(energy1[0])
-            Eprime.append(energy2[0])
-            tdist.append(tracedist(rd1,rd2))
+    trace_dist =[]
+    
+    energies, states = hamiltonian.eigenstates()
+    
+    for energy_pair1, energy_pair2 in tqdm(product(zip(energies,states),zip(energies,states))):
+        
+        e1,s1 = energy_pair1
+        e2,s2 = energy_pair2
+        
+        if e1!=e2:
+            density_op1 = ket2dm(s1)
+            density_op2 = ket2dm(s2)
+            red_dens1 = density_op1.ptrace(0)
+            red_dens2 = density_op2.ptrace(0)
+            E.append(e1)
+            Eprime.append(e2)
+            trace_dist.append(tracedist(red_dens1,red_dens2))
     
     fig = plt.figure(figsize=plt.figaspect(0.5))
     tri = mtri.Triangulation(E, Eprime)
     ax = fig.add_subplot(1,1,1, projection='3d')
-    ax.plot_trisurf(E,Eprime,tdist)
+    ax.set_xlabel("E Value")
+    ax.set_ylabel("E' Value")
+    ax.set_zlabel("Trace distance")
+    ax.set_title(f"Trace distance of energy density operators: {len(E)} pairs")
+    ax.plot_trisurf(E,Eprime,trace_dist)
     plt.show()
 
-        
-        
+def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int, trace=0): 
+    times = linspace(0,time,steps)
+    results = mesolve(hamiltonian,init_state,times,[],[],options=Options(nsteps=1e6))
+    equilibrated_state = get_equilibrated_dens_op(hamiltonian,init_state)
+    effective_dimension = eff_dim((equilibrated_state))
+    trace_distances = [tracedist(equilibrated_state.ptrace(trace),state.ptrace(trace)) for state in results.states]
+    plt.plot(times,trace_distances)
+    plt.title(f"System with effective dimension {effective_dimension:.2f} ")
+    plt.xlabel("Time / hbar")
+    plt.ylabel("Trace-distance rho_eq - rho")
+    plt.show()  
     
 
 
 
 
+n=8
+alpha = Heisenberg1dRingGen(5/6,-11,-2,n)
+H = hamiltonian(random_hamiltonian,lambda n,i: 0, n)
+state = tensor([basis(2,1)]*n)
 
+equilibration_analyser(H,state,2,100,trace=[0,1])
 
-
-#example way to evolve a state with qutip can also use essolve 
-H = hamiltonian(alpha,lambda n,i: 0, n)
-
-energy_trace_dist_compare(H)
-
-
-
-psi0 = tensor(basis(2,1),basis(2,0),basis(2,0))
-times = linspace(0,1,10)
-result = mesolve(H,psi0,times,[],[])
 
 
