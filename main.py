@@ -6,7 +6,7 @@ from qutip.metrics import tracedist
 from qutip.states import basis,ket2dm
 from qutip import Options
 
-from numpy import linspace,array
+from numpy import linspace,array,sqrt
 from numpy.random import normal
 from tqdm import tqdm
 from matplotlib import pyplot as plt
@@ -158,7 +158,8 @@ def hamiltonian(alpha,beta,N):
 
 
 def energy_trace_dist_compare(hamiltonian:Qobj):
-    
+    #Todo look into what is going wrong
+
     E =[]
     Eprime =[]
     trace_dist =[]
@@ -180,37 +181,40 @@ def energy_trace_dist_compare(hamiltonian:Qobj):
             trace_dist.append(tracedist(red_dens1,red_dens2))
     
     fig = plt.figure(figsize=plt.figaspect(0.5))
-    tri = mtri.Triangulation(E, Eprime)
+    #tri = mtri.Triangulation(E, Eprime)
+    
     ax = fig.add_subplot(1,1,1, projection='3d')
     ax.set_xlabel("E Value")
     ax.set_ylabel("E' Value")
     ax.set_zlabel("Trace distance")
     ax.set_title(f"Trace distance of energy density operators: {len(E)} pairs")
     ax.plot_trisurf(E,Eprime,trace_dist)
+    
     plt.show()
 
-def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int, trace=0): 
+def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int, trace=[0]): 
+    #TODO THINK OVER WITH PAPER
     times = linspace(0,time,steps)
     results = mesolve(hamiltonian,init_state,times,[],[],options=Options(nsteps=1e6))
     equilibrated_state = get_equilibrated_dens_op(hamiltonian,init_state)
-    effective_dimension = eff_dim((equilibrated_state))
+    effective_dimension = eff_dim(equilibrated_state)
+    bound = 0.5*sqrt(2**len(trace)**2/effective_dimension)
     trace_distances = [tracedist(equilibrated_state.ptrace(trace),state.ptrace(trace)) for state in results.states]
     plt.plot(times,trace_distances)
-    plt.title(f"System with effective dimension {effective_dimension:.2f} ")
+    plt.title(f"System with effective dimension {effective_dimension:.2f} and bound {bound} ")
     plt.xlabel("Time / hbar")
     plt.ylabel("Trace-distance rho_eq - rho")
     plt.show()  
     
 
 
-
-
-n=8
-alpha = Heisenberg1dRingGen(5/6,-11,-2,n)
+n=7
+state:Qobj = gen_random_state(n)
+alpha = Heisenberg1dRingGen(0,0,1,n)
 H = hamiltonian(random_hamiltonian,lambda n,i: 0, n)
-state = tensor([basis(2,1)]*n)
 
-equilibration_analyser(H,state,2,100,trace=[0,1])
+
+equilibration_analyser(H,state,5,100)
 
 
 
