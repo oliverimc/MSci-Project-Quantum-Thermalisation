@@ -6,7 +6,7 @@ from qutip.metrics import tracedist
 from qutip.states import basis,ket2dm
 from qutip import Options
 
-from numpy import linspace,array,sqrt
+from numpy import linspace,array,sqrt,zeros
 from numpy.random import normal
 from tqdm import tqdm
 from matplotlib import pyplot as plt
@@ -31,7 +31,38 @@ sigma = [sigmax(),sigmay(),sigmaz()]
 #TODO FIX MEMORY ERROR by replacing sum(list) with iteration sum
 #TODO watch system equilibrate
 
+def get_sig_dif_states(H):
+    """
+    Takes a Hamiltonian calcualtes its eigenstates and values
+    then removes any degneracies (chucks away states) and makes sure they are not 
+    within a small distance of each other
+    """
+    
+    val,states = H.eigenstates()
+    pairs = zip(val,states)
+    non_degen_pairs =[]
+    e_seen =[] # what energy values have we seen so far we know to chuck away because seen before => degenerate
+    
+    for e,s in pairs:
+        if e in e_seen:
+            pass
+        
+        else:
+            e_seen.append(e)
+            non_degen_pairs.append((e,s))
 
+    prev = non_degen_pairs[0][0]
+
+    sig_different_pairs =[]
+
+    for energy, state in non_degen_pairs:
+        if(abs(energy-prev)>0.5):
+            sig_different_pairs.append((energy,state))
+            prev = energy
+
+    
+    return sig_different_pairs
+    
 def Heisenberg1dRingGen(Jx,Jy,Jz,N):
     
     def return_func(n,m,i,j):
@@ -157,31 +188,33 @@ def hamiltonian(alpha,beta,N):
     return sum(spin_components)
 
 
-def energy_trace_dist_compare(hamiltonian:Qobj):
-    #Todo look into what is going wrong
-
+def energy_trace_comp_3d(energy_pairs):
+   
     E =[]
     Eprime =[]
     trace_dist =[]
     
-    energies, states = hamiltonian.eigenstates()
     
-    for energy_pair1, energy_pair2 in tqdm(product(zip(energies,states),zip(energies,states))):
+    for energy_pair1, energy_pair2 in tqdm(product(energy_pairs,energy_pairs)):
+        
         
         e1,s1 = energy_pair1
         e2,s2 = energy_pair2
-        
-        if e1!=e2:
+
+        if e1!=e2 and s1!=s2:
+
             density_op1 = ket2dm(s1)
             density_op2 = ket2dm(s2)
+            
             red_dens1 = density_op1.ptrace(0)
             red_dens2 = density_op2.ptrace(0)
+            
             E.append(e1)
             Eprime.append(e2)
             trace_dist.append(tracedist(red_dens1,red_dens2))
     
     fig = plt.figure(figsize=plt.figaspect(0.5))
-    #tri = mtri.Triangulation(E, Eprime)
+    tri = mtri.Triangulation(E, Eprime)
     
     ax = fig.add_subplot(1,1,1, projection='3d')
     ax.set_xlabel("E Value")
@@ -192,29 +225,88 @@ def energy_trace_dist_compare(hamiltonian:Qobj):
     
     plt.show()
 
+def energy_trace_comp_heat(energy_pairs):
+   #does it work??
+    E =[]
+    Eprime =[]
+    trace_dist ={}
+    
+    for energy_pair1, energy_pair2 in tqdm(product(energy_pairs,energy_pairs)):
+        
+        e1,s1 = energy_pair1
+        e2,s2 = energy_pair2
+
+        if e1!=e2 and s1!=s2:
+
+            density_op1 = ket2dm(s1)
+            density_op2 = ket2dm(s2)
+            
+            red_dens1 = density_op1.ptrace(0)
+            red_dens2 = density_op2.ptrace(0)
+            
+            E.append(e1)
+            Eprime.append(e2)
+            trace_dist[str(e1)+' '+str(e2)]=tracedist(red_dens1,red_dens2)
+    
+    data = zeros((len(E),len(E)))
+    
+    for x,ex in enumerate(E):
+        for y,ey in enumerate(Eprime):
+            if ex!=ey:
+                data[x][y]=trace_dist[str(ex)+' '+str(ey)]
+            else:
+                data[x][y]=0
+    
+    plt.imshow(data,interpolation ="nearest")
+    plt.colorbar()
+    plt.show()
+
+
 def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int, trace=[0]): 
-    #TODO THINK OVER WITH PAPER
+    
     times = linspace(0,time,steps)
     results = mesolve(hamiltonian,init_state,times,[],[],options=Options(nsteps=1e6))
-    equilibrated_state = get_equilibrated_dens_op(hamiltonian,init_state)
-    effective_dimension = eff_dim(equilibrated_state)
+    
+    equilibrated_dens_op = get_equilibrated_dens_op(hamiltonian,init_state)
+    effective_dimension = eff_dim(equilibrated_dens_op)
     bound = 0.5*sqrt(2**len(trace)**2/effective_dimension)
-    trace_distances = [tracedist(equilibrated_state.ptrace(trace),state.ptrace(trace)) for state in results.states]
+    
+    trace_distances = [tracedist(equilibrated_dens_op.ptrace(trace),state.ptrace(trace)) for state in results.states]
+    
     plt.plot(times,trace_distances)
-    plt.title(f"System with effective dimension {effective_dimension:.2f} and bound {bound} ")
+    plt.title(f"System with effective dimension {effective_dimension:.2f} and bound {bound:.2f} ")
     plt.xlabel("Time / hbar")
     plt.ylabel("Trace-distance rho_eq - rho")
     plt.show()  
     
 
 
-n=7
-state:Qobj = gen_random_state(n)
-alpha = Heisenberg1dRingGen(0,0,1,n)
-H = hamiltonian(random_hamiltonian,lambda n,i: 0, n)
+n=8
+
+state1 = tensor([basis(2,0)]*n)
+alpha1 = Heisenberg1dRingGen(-1,1,1,n)
+H1 = hamiltonian(alpha1,lambda n,i: 0, n)
 
 
-equilibration_analyser(H,state,5,100)
+state2 = tensor([basis(2,0)]*n)
+alpha2 = Heisenberg1dRingGen(-1,1,1,n)
+H2 = hamiltonian(random_hamiltonian,lambda n,i: 0, n)
+
+state3 = tensor([basis(2,0)]*n)
+alpha3 = Heisenberg1dChainGen(-1,0,1,n)
+H3 = hamiltonian(alpha3,lambda n,i: 0, n)
+
+
+
+#for energy in get_sig_dif_states(H):
+#    print(energy[0])
+#    print(energy[1])
+
+
+#energy_trace_comp_heat(get_sig_dif_states((H)))
+equilibration_analyser(H1,state1,10,100)
+equilibration_analyser(H2,state2,10,100)
+equilibration_analyser(H3,state3,10,100)
 
 
 
