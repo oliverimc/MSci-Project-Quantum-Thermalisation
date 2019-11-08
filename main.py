@@ -272,11 +272,14 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int
     bound = 0.5*sqrt(2**len(trace)**2/effective_dimension)
     
     trace_distances = [tracedist(equilibrated_dens_op.ptrace(trace),state.ptrace(trace)) for state in results.states]
+    bound_line = [bound for state in results.states]
     
-    plt.plot(times,trace_distances)
-    plt.title(f"System with effective dimension {effective_dimension:.2f} and bound {bound:.2f} ")
+    plt.plot(times,trace_distances,label="Trace-Distance")
+    plt.plot(times,bound_line,label="Bound-Distance")
+    plt.title(f"System: effective dimension {effective_dimension:.2f} and bound {bound:.2f} ")
     plt.xlabel("Time / hbar")
-    plt.ylabel("Trace-distance rho_eq - rho")
+    plt.ylabel(r"$TrDist(\rho(t),\omega$)")
+    plt.legend()
     plt.show()  
     
 
@@ -304,9 +307,9 @@ H3 = hamiltonian(alpha3,lambda n,i: 0, n)
 
 
 #energy_trace_comp_heat(get_sig_dif_states((H)))
-equilibration_analyser(H1,state1,10,100)
-equilibration_analyser(H2,state2,10,100)
-equilibration_analyser(H3,state3,10,100)
+equilibration_analyser(H1,state1,50,200)
+equilibration_analyser(H2,state2,50,200)
+equilibration_analyser(H3,state3,50,200)
 
 
 
