@@ -22,7 +22,7 @@ from itertools import product
 #   |___         ---------          |
 #   |   |        ---------          | 
 #   |   |                        ___|___
-# hbar == 1   
+# hbar ==1   
 
 
 #purity = Tr(rho^2) 1->1/d where 1/d is maximally mixed 
