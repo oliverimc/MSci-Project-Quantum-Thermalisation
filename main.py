@@ -22,8 +22,10 @@ from itertools import product
 #   |___         ---------          |
 #   |   |        ---------          | 
 #   |   |                        ___|___
-# hbar ==1   
+# hbar == 1   
 
+
+#purity = Tr(rho^2) 1->1/d where 1/d is maximally mixed 
 
 sigma = [sigmax(),sigmay(),sigmaz()]
 
@@ -227,6 +229,7 @@ def energy_trace_comp_3d(energy_pairs):
 
 def energy_trace_comp_heat(energy_pairs):
    #does it work??
+   #TODO look at lower energy eg lowest 10% by value E <0
     E =[]
     Eprime =[]
     trace_dist ={}
@@ -277,20 +280,19 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int
     plt.plot(times,trace_distances,label="Trace-Distance")
     plt.plot(times,bound_line,label="Bound-Distance")
     plt.title(f"System: effective dimension {effective_dimension:.2f} and bound {bound:.2f} ")
-    plt.xlabel("Time / hbar")
+    plt.xlabel(r"Time /$\hbar$s")
     plt.ylabel(r"$TrDist(\rho(t),\omega$)")
     plt.legend()
     plt.show()  
     
 
 
-n=8
-
+n=9
 state1 = tensor([basis(2,0)]*n)
 alpha1 = Heisenberg1dRingGen(-1,1,1,n)
 H1 = hamiltonian(alpha1,lambda n,i: 0, n)
-
-
+energy_trace_comp_3d(get_sig_dif_states((H1)))
+exit()
 state2 = tensor([basis(2,0)]*n)
 alpha2 = Heisenberg1dRingGen(-1,1,1,n)
 H2 = hamiltonian(random_hamiltonian,lambda n,i: 0, n)
