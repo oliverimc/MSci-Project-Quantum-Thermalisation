@@ -13,6 +13,8 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as mtri
 
+import sys
+
 from time import time
 from itertools import product
 
@@ -264,6 +266,33 @@ def energy_trace_comp_heat(energy_pairs):
     plt.colorbar()
     plt.show()
 
+def energy_trace_comp_2d(H:Qobj, fraction, d, energy_diff =100):
+    energys, states = H.eigenstates()
+   
+    x_vals =[]
+    y_vals =[]
+    energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
+    energy_pairs_range = energy_pairs[:int(len(energy_pairs)*fraction)]
+    
+    dims = list(range(d))
+
+    for pair1,pair2 in tqdm(product(energy_pairs_range,energy_pairs_range)):
+        if(pair1!=pair2):
+            energy_difference = abs(pair1[0]-pair2[0])
+            if(energy_difference<energy_diff):
+                substate1 = ket2dm(pair1[1]).ptrace(dims)
+                substate2 = ket2dm(pair2[1]).ptrace(dims)
+                trace_distance_val = tracedist(substate1,substate2)
+                x_vals.append(energy_difference)
+                y_vals.append(trace_distance_val) 
+
+    return x_vals,y_vals 
+    
+
+
+
+
+
 
 def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int, trace=[0]): 
     
@@ -286,14 +315,36 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int
     plt.show()  
     
 
-
 n=9
+
 state1 = tensor([basis(2,0)]*n)
-alpha1 = Heisenberg1dRingGen(-1,1,1,n)
-H1 = hamiltonian(alpha1,lambda n,i: 0, n)
-energy_trace_comp_3d(get_sig_dif_states((H1)))
-exit()
-state2 = tensor([basis(2,0)]*n)
+alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
+beta = lambda n,i :0
+h = hamiltonian(alpha1,beta,n) + 0.05*hamiltonian(random_hamiltonian,beta,n)
+markers = ['.','o','v','^', '>', '<','8','s','+']
+
+for d in range(0,n,2):
+    xs,ys = energy_trace_comp_2d(h,0.2,d+1)
+    plt.scatter(xs,ys,s=5,marker=markers[d], label =str(d+1))
+    
+
+plt.xlabel("Energy Difference")
+plt.ylabel("Trace Distance")
+plt.legend()
+plt.show()
+
+ 
+
+
+
+
+
+
+
+
+
+
+""" state2 = tensor([basis(2,0)]*n)
 alpha2 = Heisenberg1dRingGen(-1,1,1,n)
 H2 = hamiltonian(random_hamiltonian,lambda n,i: 0, n)
 
@@ -311,7 +362,7 @@ H3 = hamiltonian(alpha3,lambda n,i: 0, n)
 #energy_trace_comp_heat(get_sig_dif_states((H)))
 equilibration_analyser(H1,state1,50,200)
 equilibration_analyser(H2,state2,50,200)
-equilibration_analyser(H3,state3,50,200)
+equilibration_analyser(H3,state3,50,200) """
 
 
 
