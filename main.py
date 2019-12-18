@@ -288,9 +288,61 @@ def energy_trace_comp_2d(H:Qobj, fraction, d, energy_diff =100):
 
     return x_vals,y_vals 
     
+def energy_trace__relative_n():
+    
+    difference = []
+    n_range = range(4,12)
+    
+    for n in tqdm(n_range):
+        difference.append(0)
+        
+        alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
+        beta = lambda n,i :0.1
+        h = hamiltonian(alpha1,beta,n) + 0.05*hamiltonian(random_hamiltonian,lambda i,n:0,n)
+        energys, states = h.eigenstates()
+        energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
+        band = energy_pairs[:int(len(energy_pairs)/10)]
+        reduced_band = [(pair[0],pair[1].ptrace([0])) for pair in band]
+        
+        for energy_pair1 , energy_pair2 in product(reduced_band,reduced_band):
+            if energy_pair1!=energy_pair2:
+                difference[-1]+=tracedist(energy_pair1[1],energy_pair2[1])
+            
+            difference[-1]/len(reduced_band)
+   
+    plt.plot(n_range,difference)
+    plt.show()
 
 
-
+def energy_trace__fixed_n():
+    
+    difference = []
+    n_range = range(4,14)
+    
+    for n in tqdm(n_range):
+        difference.append(0)
+        
+        alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
+        beta = lambda n,i :0.1
+        h = hamiltonian(alpha1,beta,n) + 0.05*hamiltonian(random_hamiltonian,lambda i,n:0,n)
+        energys, states = h.eigenstates()
+        energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
+        band = energy_pairs[:20]
+        reduced_band = [(pair[0],pair[1].ptrace([0])) for pair in band]
+        counter =0
+        for energy_pair1 , energy_pair2 in product(reduced_band,reduced_band):
+            if energy_pair1!=energy_pair2:
+                difference[-1]+=tracedist(energy_pair1[1],energy_pair2[1])
+                counter+=1
+        difference[-1]/=counter
+            
+            
+            
+   
+    plt.plot(n_range,difference)
+    plt.xlabel("Average Trace Distance")
+    plt.ylabel("System spin number")
+    plt.show()
 
 
 
@@ -315,34 +367,22 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int
     plt.show()  
     
 
-n=9
 
-state1 = tensor([basis(2,0)]*n)
-alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
-beta = lambda n,i :0
-h = hamiltonian(alpha1,beta,n) + 0.05*hamiltonian(random_hamiltonian,beta,n)
-markers = ['.','o','v','^', '>', '<','8','s','+']
 
-for d in range(0,n,2):
-    xs,ys = energy_trace_comp_2d(h,0.2,d+1)
-    plt.scatter(xs,ys,s=5,marker=markers[d], label =str(d+1))
-    
 
-plt.xlabel("Energy Difference")
-plt.ylabel("Trace Distance")
-plt.legend()
-plt.show()
 
  
+#average distance of energies in a band as n increased!
+
+
+energy_trace__fixed_n()
 
 
 
 
 
 
-
-
-
+#equilibration analyser 
 
 """ state2 = tensor([basis(2,0)]*n)
 alpha2 = Heisenberg1dRingGen(-1,1,1,n)
@@ -366,3 +406,24 @@ equilibration_analyser(H3,state3,50,200) """
 
 
 
+
+#eth theorem test near energys give near energy densitys 
+"""
+
+state1 = tensor([basis(2,0)]*n)
+alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
+beta = lambda n,i :0.1
+h = hamiltonian(alpha1,beta,n) #+ 0.05*hamiltonian(random_hamiltonian,lambda i,n:0,n)
+markers = ['.','o','v','^', '>', '<','8','s','+']
+
+for d in range(0,n,2):
+    xs,ys = energy_trace_comp_2d(h,0.3,d+1)
+    plt.scatter(xs,ys,s=5,marker=markers[d], label =str(d+1))
+    
+
+plt.xlabel("Energy Difference")
+plt.ylabel("Trace Distance")
+plt.legend()
+plt.show()
+
+"""
