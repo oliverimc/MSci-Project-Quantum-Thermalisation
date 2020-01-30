@@ -14,7 +14,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as mtri
 
 import sys
-
+from math import sqrt
 from time import time
 from itertools import product
 
@@ -30,7 +30,7 @@ from itertools import product
 #purity = Tr(rho^2) 1->1/d where 1/d is maximally mixed 
 
 sigma = [sigmax(),sigmay(),sigmaz()]
-
+sqrt2 = sqrt(2)
 
 #TODO FIX MEMORY ERROR by replacing sum(list) with iteration sum
 #TODO watch system equilibrate
@@ -90,7 +90,8 @@ def Heisenberg1dChainGen(Jx,Jy,Jz,N):
     return return_func
 
 def random_hamiltonian(n,m,i,j):
-    return normal()
+    return complex(normal(),normal())/sqrt2
+    
 
 
 def basis_vectors(n):
@@ -120,6 +121,9 @@ def gen_random_state(n):
     """
     state = sum([complex(normal(),normal())*vector for vector in basis_vectors(n)])
     return state.unit()
+
+def make_hermitian(h: Qobj):
+    return 0.5*(h + h.dag())
 
 def get_equilibrated_dens_op(hamiltonian:Qobj, init_state:Qobj):
     energys,states = hamiltonian.eigenstates()
@@ -291,7 +295,7 @@ def energy_trace_comp_2d(H:Qobj, fraction, d, energy_diff =100):
 def energy_trace__relative_n():
     
     difference = []
-    n_range = range(4,12)
+    n_range = range(6,13)
     
     for n in tqdm(n_range):
         difference.append(0)
@@ -303,12 +307,14 @@ def energy_trace__relative_n():
         energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
         band = energy_pairs[:int(len(energy_pairs)/10)]
         reduced_band = [(pair[0],pair[1].ptrace([0])) for pair in band]
-        
+        counter =0
         for energy_pair1 , energy_pair2 in product(reduced_band,reduced_band):
             if energy_pair1!=energy_pair2:
                 difference[-1]+=tracedist(energy_pair1[1],energy_pair2[1])
+                counter+=1
+                #print(counter)
             
-            difference[-1]/len(reduced_band)
+        difference[-1]/(counter) #look at this seems to be where the problem lies
    
     plt.plot(n_range,difference)
     plt.show()
@@ -346,7 +352,7 @@ def energy_trace__fixed_n():
 
 
 
-def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int, trace=[0]): 
+def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0]): 
     
     times = linspace(0,time,steps)
     results = mesolve(hamiltonian,init_state,times,[],[],options=Options(nsteps=1e6))
@@ -369,16 +375,24 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int,steps:int
 
 
 
+#turn the random hamiltonian into hermitian via a = b + b.dag
+#try the ranom hamiltonian being complex
+#make the epsilon pertubation much smaller bia calculating norm of matrix and dividing by that !
+#look up energy gaps and add epsilon small compared to that
+#qutip look up random unitary generator
 
 
  
 #average distance of energies in a band as n increased!
 
 
-energy_trace__fixed_n()
+#energy_trace__relative_n()
 
 
+H = hamiltonian(random_hamiltonian,lambda i,j :0, 2)
 
+print(H)
+print(make_hermitian(H))
 
 
 
@@ -407,23 +421,5 @@ equilibration_analyser(H3,state3,50,200) """
 
 
 
-#eth theorem test near energys give near energy densitys 
-"""
+#ETH theorem test near energys give near energy densitys 
 
-state1 = tensor([basis(2,0)]*n)
-alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
-beta = lambda n,i :0.1
-h = hamiltonian(alpha1,beta,n) #+ 0.05*hamiltonian(random_hamiltonian,lambda i,n:0,n)
-markers = ['.','o','v','^', '>', '<','8','s','+']
-
-for d in range(0,n,2):
-    xs,ys = energy_trace_comp_2d(h,0.3,d+1)
-    plt.scatter(xs,ys,s=5,marker=markers[d], label =str(d+1))
-    
-
-plt.xlabel("Energy Difference")
-plt.ylabel("Trace Distance")
-plt.legend()
-plt.show()
-
-"""
