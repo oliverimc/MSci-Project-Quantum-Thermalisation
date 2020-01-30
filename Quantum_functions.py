@@ -125,6 +125,10 @@ def gen_random_state(n):
 def make_hermitian(h: Qobj):
     return 0.5*(h + h.dag())
 
+def max_seperation(h:Qobj):
+    energies = h.eigenenergies()
+    return max([abs(e1-e2) for e1,e2 in product(energies,energies)])
+
 def get_equilibrated_dens_op(hamiltonian:Qobj, init_state:Qobj):
     energys,states = hamiltonian.eigenstates()
     return sum([abs(state.overlap(init_state)**2)*state*state.dag() for state in states])
@@ -389,10 +393,7 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:in
 #energy_trace__relative_n()
 
 
-H = hamiltonian(random_hamiltonian,lambda i,j :0, 2)
 
-print(H)
-print(make_hermitian(H))
 
 
 
@@ -408,12 +409,10 @@ H3 = hamiltonian(alpha3,lambda n,i: 0, n)
 
 
 
-#for energy in get_sig_dif_states(H):
-#    print(energy[0])
-#    print(energy[1])
 
 
-#energy_trace_comp_heat(get_sig_dif_states((H)))
+
+
 equilibration_analyser(H1,state1,50,200)
 equilibration_analyser(H2,state2,50,200)
 equilibration_analyser(H3,state3,50,200) """
@@ -421,5 +420,4 @@ equilibration_analyser(H3,state3,50,200) """
 
 
 
-#ETH theorem test near energys give near energy densitys 
 
