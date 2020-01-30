@@ -307,13 +307,16 @@ def energy_trace_relative_n():
     
     for n in tqdm(n_range):
         difference.append(0.0)
+        
         alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
         beta = lambda n,i :0.1
         h = hamiltonian(alpha1,beta,n) 
-        h = h + 0.05*get_ran_unit_norm_oper(n,h.dims)
+        h = h + 0.005*get_ran_unit_norm_oper(n,h.dims)
+        
         energys, states = h.eigenstates()
         energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
         band = energy_pairs[:int(len(energy_pairs)/10)]
+        
         reduced_band = [(pair[0],pair[1].ptrace([0])) for pair in band]
         counter =0.0
        
@@ -322,10 +325,6 @@ def energy_trace_relative_n():
             if energy_pair1!=energy_pair2:
                 difference[-1]+=tracedist(energy_pair1[1],energy_pair2[1])
                 counter+=1
-                
-        
-        print(counter)
-        print(difference)
         
         difference[-1]/=(counter) #look at this seems to be where the problem lies
    
@@ -342,13 +341,16 @@ def energy_trace_fixed_n():
     
     for n in tqdm(n_range):
         difference.append(0.0)
+        
         alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
         beta = lambda n,i :0.1
         h = hamiltonian(alpha1,beta,n) 
-        h = h + 0.05*get_ran_unit_norm_oper(n,h.dims)
+        h = h + 0.005*get_ran_unit_norm_oper(n,h.dims)
+        
         energys, states = h.eigenstates()
         energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
         band = energy_pairs[:20]
+        
         reduced_band = [(pair[0],pair[1].ptrace([0])) for pair in band]
         counter =0.0
         
@@ -358,12 +360,10 @@ def energy_trace_fixed_n():
                 difference[-1]+=tracedist(energy_pair1[1],energy_pair2[1])
                 counter+=1.0
         
-        print(counter)
-        print(difference)
+        
         difference[-1]/=counter
             
-            
-            
+                        
    
     plt.plot(n_range,difference)
     plt.xlabel("System spin number")
