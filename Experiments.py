@@ -1,5 +1,5 @@
 from Quantum_functions import *
-from qutip.random_objects import rand_unitary
+
 
 
 
@@ -15,21 +15,28 @@ epsilon = 0.05
 H1 = H1 + perturbation*epsilon
 markers = ['.','o','v','^', '>', '<','8','s','+']
 
-"""
+
 state2 = tensor([basis(2,0)]*n)
-alpha2 = Heisenberg1dRingGen(-1,1,1,n)
 H2 = hamiltonian(random_hamiltonian,lambda n,i: 0, n) #?investigatge
 
 state3 = tensor([basis(2,0)]*n)
 alpha3 = Heisenberg1dChainGen(-1,0,1,n)
 H3 = hamiltonian(alpha3,lambda n,i: 0, n)
-
+"""
 
 #Test equilibration bounds with different hamiltonians 
 equilibration_analyser(H1,state1,50,200)
 equilibration_analyser(H2,state2,50,200)
 equilibration_analyser(H3,state3,50,200)
 """
+
+#Band of energies average trace dist as n increases relative band incr wit n fixed-> stays same
+energy_trace_relative_n()
+energy_trace_fixed_n()
+
+
+exit()
+
 
 #ETH theorem test near energys give near energy densitys 
 for d in range(0,3):

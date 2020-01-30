@@ -2,6 +2,7 @@ from qutip import sigmax, sigmay, sigmaz, identity, tensor
 from qutip.mesolve import mesolve
 from qutip.essolve import essolve
 from qutip import Qobj
+from qutip.random_objects import rand_unitary
 from qutip.metrics import tracedist
 from qutip.states import basis,ket2dm
 from qutip import Options
@@ -132,7 +133,10 @@ def max_seperation(h:Qobj):
 def get_equilibrated_dens_op(hamiltonian:Qobj, init_state:Qobj):
     energys,states = hamiltonian.eigenstates()
     return sum([abs(state.overlap(init_state)**2)*state*state.dag() for state in states])
-   
+
+def get_ran_unit_norm_oper(n,_dims):
+    return make_hermitian(rand_unitary(2**n, dims = _dims)) 
+
 
 def hamiltonian_spin_interaction_component(alpha, n, m, i, j, N):
     """
@@ -296,56 +300,74 @@ def energy_trace_comp_2d(h:Qobj, fraction, d, energy_diff =100):
 
     return x_vals,y_vals 
     
-def energy_trace__relative_n(h):
+def energy_trace_relative_n():
     
     difference = []
-    n_range = range(6,13)
+    n_range = range(5,12)
     
     for n in tqdm(n_range):
-        difference.append(0)
-
+        difference.append(0.0)
+        alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
+        beta = lambda n,i :0.1
+        h = hamiltonian(alpha1,beta,n) 
+        h = h + 0.05*get_ran_unit_norm_oper(n,h.dims)
         energys, states = h.eigenstates()
         energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
         band = energy_pairs[:int(len(energy_pairs)/10)]
         reduced_band = [(pair[0],pair[1].ptrace([0])) for pair in band]
-        counter =0
+        counter =0.0
+       
         
         for energy_pair1 , energy_pair2 in product(reduced_band,reduced_band):
             if energy_pair1!=energy_pair2:
                 difference[-1]+=tracedist(energy_pair1[1],energy_pair2[1])
                 counter+=1
-                #print(counter)
-            
+                
+        
+        print(counter)
+        print(difference)
+        
         difference[-1]/=(counter) #look at this seems to be where the problem lies
    
     plt.plot(n_range,difference)
+    plt.xlabel("System spin number")
+    plt.ylabel("Average Trace Distance")
     plt.show()
 
 
-def energy_trace__fixed_n(h):
+def energy_trace_fixed_n():
     
     difference = []
-    n_range = range(4,14)
+    n_range = range(4,12)
     
     for n in tqdm(n_range):
-        difference.append(0)
+        difference.append(0.0)
+        alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
+        beta = lambda n,i :0.1
+        h = hamiltonian(alpha1,beta,n) 
+        h = h + 0.05*get_ran_unit_norm_oper(n,h.dims)
         energys, states = h.eigenstates()
         energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
         band = energy_pairs[:20]
         reduced_band = [(pair[0],pair[1].ptrace([0])) for pair in band]
-        counter =0
+        counter =0.0
+        
+
         for energy_pair1 , energy_pair2 in product(reduced_band,reduced_band):
             if energy_pair1!=energy_pair2:
                 difference[-1]+=tracedist(energy_pair1[1],energy_pair2[1])
-                counter+=1
+                counter+=1.0
+        
+        print(counter)
+        print(difference)
         difference[-1]/=counter
             
             
             
    
     plt.plot(n_range,difference)
-    plt.xlabel("Average Trace Distance")
-    plt.ylabel("System spin number")
+    plt.xlabel("System spin number")
+    plt.ylabel("Average Trace Distance")
     plt.show()
 
 
