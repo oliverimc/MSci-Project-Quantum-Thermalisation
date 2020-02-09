@@ -114,6 +114,9 @@ def eff_dim(dens_oper:Qobj):
     dens_oper_sq = dens_oper**2
     return 1/(dens_oper_sq.tr())
 
+def purity(dens_oper:Qobj):
+    return (dens_oper**2).tr()
+
 def gen_random_state(n):
     """
     Generate a random state
@@ -279,7 +282,7 @@ def energy_trace_comp_heat(energy_pairs):
     plt.show()
 
 def energy_trace_comp_2d(h:Qobj, fraction, d, energy_diff =100):
-    energys, states = H.eigenstates()
+    energys, states = h.eigenstates()
    
     x_vals =[]
     y_vals =[]
@@ -303,7 +306,7 @@ def energy_trace_comp_2d(h:Qobj, fraction, d, energy_diff =100):
 def energy_trace_relative_n():
     
     difference = []
-    n_range = range(5,12)
+    n_range = range(5,13)
     
     for n in tqdm(n_range):
         difference.append(0.0)
@@ -337,7 +340,7 @@ def energy_trace_relative_n():
 def energy_trace_fixed_n():
     
     difference = []
-    n_range = range(4,12)
+    n_range = range(5,13)
     
     for n in tqdm(n_range):
         difference.append(0.0)
