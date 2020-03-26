@@ -13,11 +13,13 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as mtri
+import matplotlib.patches as mpatches
 
 import sys
 from math import sqrt
 from time import time
 from itertools import product
+from collections import Counter
 
 
 
@@ -91,7 +93,7 @@ def Heisenberg1dChainGen(Jx,Jy,Jz,N):
     return return_func
 
 def random_hamiltonian(n,m,i,j):
-    return complex(normal(),normal())/sqrt2
+    return complex(random(),random())/sqrt(2)
     
 
 
@@ -396,47 +398,42 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:in
     plt.show()  
     
 
+def energy_band_plot(hamiltonian,title_text):
+    energys = hamiltonian.eigenenergies()
+    energys_count = Counter(energys)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1) # two rows, one column, first plot
+
+    max_energy = max(energys)
+    min_energy = min(energys)
+    degeneracy = False
+    
+    text_shift = (max_energy-min_energy)/100
+    
+    for energy, degen in energys_count.items():
+        color_val = 'b' if degen ==1 else "r"
+        
+        if degen >1 :
+            ax.plot(linspace(0,9.3,20),[energy for i in linspace(0,9.3,20)], color = color_val)
+            ax.text(9.4,energy-text_shift,f"Degen: {degen} fold")
+            degeneracy = True
+        else:
+            ax.plot(range(10),[energy for i in range(10)], color = color_val)
 
 
-#turn the random hamiltonian into hermitian via a = b + b.dag
-#try the ranom hamiltonian being complex
-#make the epsilon pertubation much smaller bia calculating norm of matrix and dividing by that !
-#look up energy gaps and add epsilon small compared to that
-#qutip look up random unitary generator
+    
+    degen_patch = mpatches.Patch(color='red', label='Degenerate level')
+    norm_patch = mpatches.Patch(color='blue', label='Non-Degenerate level')
+    patches = [degen_patch, norm_patch] if degeneracy else [norm_patch]
+    plt.legend(handles=patches, loc= "center left")
+    ax.set_ylabel("Normalized energy value")
+    
+    ax.axes.get_xaxis().set_visible(False)
+    ax.set_xlim([-5,15])
+    plt.title(title_text)
+    plt.show()
 
 
  
-#average distance of energies in a band as n increased!
-
-
-#energy_trace__relative_n()
-
-
-
-
-
-
-#equilibration analyser 
-
-""" state2 = tensor([basis(2,0)]*n)
-alpha2 = Heisenberg1dRingGen(-1,1,1,n)
-H2 = hamiltonian(random_hamiltonian,lambda n,i: 0, n)
-
-state3 = tensor([basis(2,0)]*n)
-alpha3 = Heisenberg1dChainGen(-1,0,1,n)
-H3 = hamiltonian(alpha3,lambda n,i: 0, n)
-
-
-
-
-
-
-
-equilibration_analyser(H1,state1,50,200)
-equilibration_analyser(H2,state2,50,200)
-equilibration_analyser(H3,state3,50,200) """
-
-
-
-
 
