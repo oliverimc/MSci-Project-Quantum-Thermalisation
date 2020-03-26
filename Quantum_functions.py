@@ -437,3 +437,32 @@ def energy_band_plot(hamiltonian,title_text):
 
  
 
+"""
+JOES WORK FROM NOW ONWards
+"""
+
+
+def eigs(H):
+    """Returns list of eigenvalues, eigenstates of a Hamiltonian"""
+    evals,evecs=la.eigh(H)
+    return evals,evecs.T
+
+def decomp(state,basis):
+    """computes decomposition coefficients of a state in a given basis"""
+    decomp=[]
+    for vector in basis:
+        coefft=inner(vector,state)
+        decomp.append(coefft)
+    return decomp
+
+def evo(coeffts,evecs,times):
+    """Computes evolution of a pure state for a list of times. Takes energy basis
+    decomposition as input. Outputs density operators."""
+    for t in times:
+        state=(0+0j)*init
+        for k in range(len(evals)):
+            phase=-evals[k]*t/hbar
+            state+=np.exp(phase*(0+1j))*decomp[k]*evecs[k]
+            state=outer(state,state) #comment out to return kets
+        states.append(state)
+    return states
