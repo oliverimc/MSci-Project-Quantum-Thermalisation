@@ -10,14 +10,14 @@ from numpy import all as allc
 import numpy as np 
 
 @ray.remote
-def energy_trace_batch(energy_state_chunk, energy_states,dims):
+def energy_trace_batch(energy_states,dims,strt,num):
     
     energys = []
     traces = []
     
     dim = list(range(dims))
     
-    for pair1,pair2  in product(energy_state_chunk, energy_states) :
+    for pair1,pair2  in product(energy_states[strt:strt+num], energy_states) :
         
         if pair1!=pair2:
             
@@ -33,7 +33,7 @@ def energy_trace_batch(energy_state_chunk, energy_states,dims):
     
 
 def energy_trace_compare_p(h,fraction,dims, random_sample = True, proc=4):
-        
+    
     energys, states = h.eigenstates()
     
     num_energys = len(energys)
@@ -41,13 +41,11 @@ def energy_trace_compare_p(h,fraction,dims, random_sample = True, proc=4):
     random_indices = sample(range(num_energys),int(num_energys*fraction))
     
     energy_states = [(energys[ind],ket2dm(states[ind])) for ind in random_indices]
-    
+    energy_states_id = ray.put(energy_states)
     
     n = int(num_energys/proc)
     
-    energy_states_chunks = [energy_states[i * n:(i + 1) * n] for i in range((len(energy_states) + n - 1) // n )]  
-    
-    result_ids = [energy_trace_batch.remote(chunk,energy_states,dims) for chunk in energy_states_chunks]
+    result_ids = [energy_trace_batch.remote(energy_states_id,dims,n*i,n) for i in range(proc)]
     
     results = ray.get(result_ids)
 
