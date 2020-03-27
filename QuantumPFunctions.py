@@ -1,12 +1,13 @@
 import ray
 from qutip.states import ket2dm
-from itertools import product
+from itertools import product,chain
 from qutip.metrics import tracedist
 from qutip import Qobj
 from qutip import *
 from random import sample
 import cupy as cp
 from numpy import all as allc 
+import numpy as np 
 
 @ray.remote
 def energy_trace_batch(energy_state_chunk, energy_states,dims):
@@ -31,7 +32,7 @@ def energy_trace_batch(energy_state_chunk, energy_states,dims):
     
     
 
-def energy_trace_compare_p(h,fraction,dims, random_sample = True):
+def energy_trace_compare_p(h,fraction,dims, random_sample = True, proc=4):
         
     energys, states = h.eigenstates()
     
@@ -39,9 +40,10 @@ def energy_trace_compare_p(h,fraction,dims, random_sample = True):
     
     random_indices = sample(range(num_energys),int(num_energys*fraction))
     
-    energy_states = [(energys[ind],states[ind]) for ind in random_indices]
+    energy_states = [(energys[ind],ket2dm(states[ind])) for ind in random_indices]
     
-    n = int(num_energys/4)
+    
+    n = int(num_energys/proc)
     
     energy_states_chunks = [energy_states[i * n:(i + 1) * n] for i in range((len(energy_states) + n - 1) // n )]  
     
@@ -51,6 +53,8 @@ def energy_trace_compare_p(h,fraction,dims, random_sample = True):
 
     xs = [val[0] for val in results]
     ys = [val[1] for val in results]
+    xs = list(chain(*xs))
+    ys = list(chain(*ys))
 
     
     return xs,ys

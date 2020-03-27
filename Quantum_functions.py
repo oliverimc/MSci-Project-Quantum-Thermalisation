@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as mtri
 import matplotlib.patches as mpatches
+from random import sample
 
 import sys
 from math import sqrt
@@ -284,24 +285,29 @@ def energy_trace_comp_heat(energy_pairs):
     plt.show()
 
 def energy_trace_comp_2d(h:Qobj, fraction, d, energy_diff =100):
+    
     energys, states = h.eigenstates()
+    
+    num_energys = len(energys)
+    
+    random_indices = sample(range(num_energys),int(num_energys*fraction))
+    
+    energy_states = [(energys[ind],ket2dm(states[ind])) for ind in random_indices]
    
     x_vals =[]
     y_vals =[]
-    energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
-    energy_pairs_range = energy_pairs[:int(len(energy_pairs)*fraction)]
     
     dims = list(range(d))
 
-    for pair1,pair2 in tqdm(product(energy_pairs_range,energy_pairs_range)):
+    for pair1,pair2 in tqdm(product(energy_states,energy_states)):
+       
         if(pair1!=pair2):
             energy_difference = abs(pair1[0]-pair2[0])
-            if(energy_difference<energy_diff):
-                substate1 = ket2dm(pair1[1]).ptrace(dims)
-                substate2 = ket2dm(pair2[1]).ptrace(dims)
-                trace_distance_val = tracedist(substate1,substate2)
-                x_vals.append(energy_difference)
-                y_vals.append(trace_distance_val) 
+            substate1 = pair1[1].ptrace(dims)
+            substate2 = pair2[1].ptrace(dims)
+            trace_distance_val = tracedist(substate1,substate2)
+            x_vals.append(energy_difference)
+            y_vals.append(trace_distance_val) 
 
     return x_vals,y_vals 
     
