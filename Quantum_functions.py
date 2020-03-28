@@ -383,7 +383,10 @@ def energy_trace_fixed_n():
 
 
 
-def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0]): 
+def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0],): 
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1) # two rows, one column, first plot
     
     times = linspace(0,time,steps)
     results = mesolve(hamiltonian,init_state,times,[],[],options=Options(nsteps=1e6))
@@ -395,13 +398,14 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:in
     trace_distances = [tracedist(equilibrated_dens_op.ptrace(trace),state.ptrace(trace)) for state in results.states]
     bound_line = [bound for state in results.states]
     
-    plt.plot(times,trace_distances,label="Trace-Distance")
-    plt.plot(times,bound_line,label="Bound-Distance")
+    ax.plot(times,trace_distances,label="Trace-Distance")
+    ax.plot(times,bound_line,label="Bound-Distance")
     plt.title(f"System: effective dimension {effective_dimension:.2f} and bound {bound:.2f} ")
-    plt.xlabel(r"Time /$\hbar$s")
-    plt.ylabel(r"$TrDist(\rho(t),\omega$)")
+    ax.set_xlabel(r"Time /$\hbar$s")
+    ax.set_ylabel(r"$TrDist(\rho(t),\omega$)")
     plt.legend()
     plt.show()  
+    
     
 
 def energy_band_plot(hamiltonian,title_text):
