@@ -142,6 +142,11 @@ def get_equilibrated_dens_op(hamiltonian:Qobj, init_state:Qobj):
     energys,states = hamiltonian.eigenstates()
     return sum((abs(state.overlap(init_state)**2)*state*state.dag() for state in states))
 
+
+def get_thermal_state(states):
+    prob = 1/len(states)
+    return prob*sum(state*state.dag() for state in states)
+
 def get_ran_unit_norm_oper(n,_dims):
     return make_hermitian(rand_unitary(2**n, dims = _dims)) 
 
@@ -369,11 +374,22 @@ def energy_band_plot(hamiltonian,title_text):
     plt.show()
 
 
-def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0]): 
+def thermalisation_analyser( init_state:Qobj, equi_op, band, trace=[0]): 
     
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1) # two rows, one column, first plot
     
-    times = linspace(0,time,steps)
-    results = mesolve(hamiltonian,init_state,times,[],[],options=Options(nsteps=1e6))
     
+    dR = len(band)
+    
+    equilibrated_dens_op = equi_op
+    equilibrated_sub_op = equilibrated_dens_op.ptrace(trace)
+    dEff = eff_dim(equilibrated_dens_op)
+   
+    thermal_state = get_thermal_state(band)
+    thermal_sub_state = thermal_state.ptrace(trace)
+
+    epsilon  = (1/dR)*sum(tracedist(thermal_sub_state, state.ptrace(trace)) for state in band)
+    actual_distance = tracedist(thermal_sub_state,equilibrated_sub_op)
+   
+    bound = epsilon*sqrt((dR/dEff)*(dR-dEff))
+
+    print(f"Actual value {actual_distance:.3f} with bound predicting {bound} with epsilon {epsilon:.3f}")
