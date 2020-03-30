@@ -76,7 +76,7 @@ def get_equilibrated_dens_op(energys, states,coefs, init_state:Qobj):
     """
     TODO BIGG BOTTLENECK needs to be parellised and look into segmenting !
     """
-    return sum([abs(coefs[i])**2*state*state.dag() for i,state in enumerate(states)])
+    return sum(abs(coefs[i])**2*state*state.dag() for i,state in enumerate(states))
 
 
 def eff_dim(dens_oper:Qobj):
@@ -98,7 +98,7 @@ def time_step(coef,eigenstates,eigenenergies,func,times,strt,num):
     result =[]
     
     for t in times[strt:strt+num]:
-        state = sum([phase(energy,t)*coef[ind]*eigenstates[ind] for ind,energy in enumerate(eigenenergies)])
+        state = sum(phase(energy,t)*coef[ind]*eigenstates[ind] for ind,energy in enumerate(eigenenergies))
         result.append(func(state))
     
     return result

@@ -22,6 +22,8 @@ from time import time
 from itertools import product
 from collections import Counter
 
+from functools import reduce
+
 
 
 #   |____                         ___
@@ -126,7 +128,7 @@ def gen_random_state(n):
     of an n particle system.
     => dimension 2^n"
     """
-    state = sum([complex(normal(),normal())*vector for vector in basis_vectors(n)])
+    state = sum(complex(normal(),normal())*vector for vector in basis_vectors(n))
     return state.unit()
 
 def make_hermitian(h: Qobj):
@@ -138,7 +140,7 @@ def max_seperation(h:Qobj):
 
 def get_equilibrated_dens_op(hamiltonian:Qobj, init_state:Qobj):
     energys,states = hamiltonian.eigenstates()
-    return sum([abs(state.overlap(init_state)**2)*state*state.dag() for state in states])
+    return sum((abs(state.overlap(init_state)**2)*state*state.dag() for state in states))
 
 def get_ran_unit_norm_oper(n,_dims):
     return make_hermitian(rand_unitary(2**n, dims = _dims)) 
@@ -197,18 +199,13 @@ def hamiltonian(alpha,beta,N):
 
     Returns: Hamiltonian Matrix
     """
+
+
+    spin_components = (hamiltonian_spin_interaction_component(alpha(n,m,i,j),n,m,i,j,N) for n,m,i,j in product(range(N),range(N),range(3),range(3)) if n!=m )
+    interaction_components = (hamiltonian_spin_on_site_component(beta(n,i),n,i,N) for n,i in product(range(N),range(3)))
+            
+    return sum(interaction_components)+sum(spin_components)
     
-    spin_components =[]
-
-    for n,m,i,j in product(range(N),range(N),range(3),range(3)):
-        if n!=m:
-            spin_components.append(hamiltonian_spin_interaction_component(alpha(n,m,i,j),n,m,i,j,N))
-
-    for n,i in product(range(N),range(3)):
-        spin_components.append(hamiltonian_spin_on_site_component(beta(n,i),n,i,N))
-     
-    return sum(spin_components)
-
 
 def energy_trace_comp_3d(energy_pairs):
    
