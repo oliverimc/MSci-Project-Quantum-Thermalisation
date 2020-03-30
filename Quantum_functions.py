@@ -19,7 +19,9 @@ from math import sqrt
 from time import time
 from itertools import product
 
+from qutip.testing import run as testQ
 
+testQ()
 
 #   |____                         ___
 #   |___         ---------          |
