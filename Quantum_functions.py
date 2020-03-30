@@ -207,79 +207,6 @@ def hamiltonian(alpha,beta,N):
     return sum(interaction_components)+sum(spin_components)
     
 
-def energy_trace_comp_3d(energy_pairs):
-   
-    E =[]
-    Eprime =[]
-    trace_dist =[]
-    
-    
-    for energy_pair1, energy_pair2 in tqdm(product(energy_pairs,energy_pairs)):
-        
-        
-        e1,s1 = energy_pair1
-        e2,s2 = energy_pair2
-
-        if e1!=e2 and s1!=s2:
-
-            density_op1 = ket2dm(s1)
-            density_op2 = ket2dm(s2)
-            
-            red_dens1 = density_op1.ptrace(0)
-            red_dens2 = density_op2.ptrace(0)
-            
-            E.append(e1)
-            Eprime.append(e2)
-            trace_dist.append(tracedist(red_dens1,red_dens2))
-    
-    fig = plt.figure(figsize=plt.figaspect(0.5))
-    tri = mtri.Triangulation(E, Eprime)
-    
-    ax = fig.add_subplot(1,1,1, projection='3d')
-    ax.set_xlabel("E Value")
-    ax.set_ylabel("E' Value")
-    ax.set_zlabel("Trace distance")
-    ax.set_title(f"Trace distance of energy density operators: {len(E)} pairs")
-    ax.plot_trisurf(E,Eprime,trace_dist)
-    
-    plt.show()
-
-def energy_trace_comp_heat(energy_pairs):
-   #does it work??
-   #TODO look at lower energy eg lowest 10% by value E <0
-    E =[]
-    Eprime =[]
-    trace_dist ={}
-    
-    for energy_pair1, energy_pair2 in tqdm(product(energy_pairs,energy_pairs)):
-        
-        e1,s1 = energy_pair1
-        e2,s2 = energy_pair2
-
-        if e1!=e2 and s1!=s2:
-
-            density_op1 = ket2dm(s1)
-            density_op2 = ket2dm(s2)
-            
-            red_dens1 = density_op1.ptrace(0)
-            red_dens2 = density_op2.ptrace(0)
-            
-            E.append(e1)
-            Eprime.append(e2)
-            trace_dist[str(e1)+' '+str(e2)]=tracedist(red_dens1,red_dens2)
-    
-    data = zeros((len(E),len(E)))
-    
-    for x,ex in enumerate(E):
-        for y,ey in enumerate(Eprime):
-            if ex!=ey:
-                data[x][y]=trace_dist[str(ex)+' '+str(ey)]
-            else:
-                data[x][y]=0
-    
-    plt.imshow(data,interpolation ="nearest")
-    plt.colorbar()
-    plt.show()
 
 def energy_trace_comp_2d(h:Qobj, fraction, d, energy_diff =100):
     
@@ -442,34 +369,11 @@ def energy_band_plot(hamiltonian,title_text):
     plt.show()
 
 
- 
-
-"""
-JOES WORK FROM NOW ONWards
-"""
-
-
-def eigs(H):
-    """Returns list of eigenvalues, eigenstates of a Hamiltonian"""
-    evals,evecs=la.eigh(H)
-    return evals,evecs.T
-
-def decomp(state,basis):
-    """computes decomposition coefficients of a state in a given basis"""
-    decomp=[]
-    for vector in basis:
-        coefft=inner(vector,state)
-        decomp.append(coefft)
-    return decomp
-
-def evo(coeffts,evecs,times):
-    """Computes evolution of a pure state for a list of times. Takes energy basis
-    decomposition as input. Outputs density operators."""
-    for t in times:
-        state=(0+0j)*init
-        for k in range(len(evals)):
-            phase=-evals[k]*t/hbar
-            state+=np.exp(phase*(0+1j))*decomp[k]*evecs[k]
-            state=outer(state,state) #comment out to return kets
-        states.append(state)
-    return states
+def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0]): 
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1) # two rows, one column, first plot
+    
+    times = linspace(0,time,steps)
+    results = mesolve(hamiltonian,init_state,times,[],[],options=Options(nsteps=1e6))
+    
