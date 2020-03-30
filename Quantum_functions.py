@@ -292,7 +292,7 @@ def energy_trace_comp_2d(h:Qobj, fraction, d, energy_diff =100):
     
     random_indices = sample(range(num_energys),int(num_energys*fraction))
     
-    energy_states = [(energys[ind],ket2dm(states[ind])) for ind in random_indices]
+    energy_states = [(energys[ind],states[ind]) for ind in random_indices]
    
     x_vals =[]
     y_vals =[]
@@ -383,7 +383,7 @@ def energy_trace_fixed_n():
 
 
 
-def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0],): 
+def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0]): 
     
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1) # two rows, one column, first plot
