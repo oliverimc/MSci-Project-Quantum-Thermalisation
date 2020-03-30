@@ -72,8 +72,11 @@ def energy_trace_compare_p(h,fraction,dims, random_sample = True, proc=4):
 
 
 
-def get_equilibrated_dens_op(energys, states, init_state:Qobj):
-    return sum([abs(state.overlap(init_state)**2)*state*state.dag() for state in states])
+def get_equilibrated_dens_op(energys, states,coefs, init_state:Qobj):
+    """
+    TODO BIGG BOTTLENECK needs to be parellised and look into segmenting !
+    """
+    return sum([abs(coefs[i])**2*state*state.dag() for i,state in enumerate(states)])
 
 
 def eff_dim(dens_oper:Qobj):
@@ -102,20 +105,22 @@ def time_step(coef,eigenstates,eigenenergies,func,times,strt,num):
 
 
 
-def simulate(energys,states,init,t_start,t_end,steps,ret_func = lambda x:x,Proc=4):
+def simulate(energys,states,coef,init,t_start,t_end,steps,ret_func = lambda x:x,Proc=4):
     
-    
-    
-    coef = [init.overlap(state) for state in states]
+    print("Starting")
+
     times = np.linspace(t_start,t_end,steps)
+    print("Done time")
     
     energys_id = ray.put(energys)
     states_id = ray.put(states)
     coef_id = ray.put(coef)
     times_id = ray.put(times)
+    print("Done memory")
     
     num = int(steps/Proc)
     
+    print("Done initial")
     
     result = [time_step.remote(coef_id,states_id,energys_id, ret_func,times_id,num*i,num) for i in range(Proc)]
     
@@ -126,12 +131,19 @@ def simulate(energys,states,init,t_start,t_end,steps,ret_func = lambda x:x,Proc=
     
     
 def equilibration_analyser_p(energys,states, init_state:Qobj, start,stop, steps:int, trace=[0],Proc=4): 
+
     
+    print("STARTING >>>>>")
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     
-    equilibrated_dens_op = get_equilibrated_dens_op(energys,states,init_state)
+    coef = [init_state.overlap(state) for state in states]
+                               
+    print(" DONE COEF")
+    
+    equilibrated_dens_op = get_equilibrated_dens_op(energys,states,coef,init_state)
     effective_dimension = eff_dim(equilibrated_dens_op)
+    
     
     #now we have the actual effective dimension trace over as cant do it before or messes up
     
@@ -139,10 +151,12 @@ def equilibration_analyser_p(energys,states, init_state:Qobj, start,stop, steps:
     
     
     bound = 0.5*np.sqrt(2**len(trace)**2/effective_dimension)
+          
+    print(" Done presetup")
     
     trace_dist_compare = lambda state: tracedist(equilibrated_dens_op,state.ptrace(trace))
     
-    trace_distances = simulate(energys,states,init_state,start,stop,steps, ret_func= trace_dist_compare)
+    trace_distances = simulate(energys,states,coef,init_state,start,stop,steps, ret_func= trace_dist_compare)
     
     times = [start+step*(stop-start)/steps for step in range(steps)]
     
