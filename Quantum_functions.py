@@ -374,15 +374,14 @@ def energy_band_plot(hamiltonian,title_text):
     plt.show()
 
 
-def thermalisation_analyser( init_state:Qobj, equi_op, band, trace=[0]): 
+def thermalisation_analyser(equilibrated_dens_op , band, trace=[0]): 
     
     
     
     dR = len(band)
-    
-    equilibrated_dens_op = equi_op
+
     equilibrated_sub_op = equilibrated_dens_op.ptrace(trace)
-    dEff = eff_dim(equilibrated_dens_op)
+    deff = eff_dim(equilibrated_dens_op)
    
     thermal_state = get_thermal_state(band)
     thermal_sub_state = thermal_state.ptrace(trace)
@@ -390,6 +389,6 @@ def thermalisation_analyser( init_state:Qobj, equi_op, band, trace=[0]):
     epsilon  = (1/dR)*sum(tracedist(thermal_sub_state, state.ptrace(trace)) for state in band)
     actual_distance = tracedist(thermal_sub_state,equilibrated_sub_op)
    
-    bound = epsilon*sqrt((dR/dEff)*(dR-dEff))
+    bound =sqrt(epsilon*(dR-deff)/deff)
 
-    print(f"Actual value {actual_distance:.3f} with bound predicting {bound} with epsilon {epsilon:.3f}")
+    print(f"Actual value {actual_distance:.3f} with bound predicting {bound} with epsilon {epsilon:.3f}, dR {dR:.3f} , deff {deff:.3f}")
