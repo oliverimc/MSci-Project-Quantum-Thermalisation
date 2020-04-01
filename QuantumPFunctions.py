@@ -140,6 +140,7 @@ def equilibration_analyser_p(energys,states, init_state:Qobj, start,stop, steps:
     coef = [init_state.overlap(state) for state in states]
                                
     print(" DONE COEF")
+    #TODO NEW BOUND IMPLEMENT
     
     equilibrated_dens_op = get_equilibrated_dens_op(energys,states,coef,init_state)
     effective_dimension = eff_dim(equilibrated_dens_op)

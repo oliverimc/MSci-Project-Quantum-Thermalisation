@@ -376,7 +376,8 @@ def energy_band_plot(hamiltonian,title_text):
 
 def thermalisation_analyser(equilibrated_dens_op , band, trace=[0]): 
     
-    
+    #TODO ADD IN GRAPH like equilibration between current state and thermal sate ! with bound plus tonys bound superimposed!
+    #Todo add a ray version of get equilibrated dens_op!! aand biuuld better ecosysmte to interface ie states, maybe in new doc
     
     dR = len(band)
 
