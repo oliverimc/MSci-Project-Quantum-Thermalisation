@@ -15,6 +15,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as mtri
 import matplotlib.patches as mpatches
 from random import sample
+import numpy as np
 
 import sys
 from math import sqrt
@@ -133,6 +134,14 @@ def gen_random_state(n):
 
 def make_hermitian(h: Qobj):
     return 0.5*(h + h.dag())
+
+
+
+def ket2dmR(state):
+    n = len(state.dims[0])
+    return Qobj(np.array(state)@np.array(state).T.conjugate(), dims = [[2]*n,[2]*n])
+
+
 
 def max_seperation(h:Qobj):
     energies = h.eigenenergies()
