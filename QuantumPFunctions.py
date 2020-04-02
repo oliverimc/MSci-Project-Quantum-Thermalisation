@@ -76,10 +76,8 @@ def energy_trace_compare_p(h,fraction,dims, random_sample = True, proc=4):
 
 
 
-def get_equilibrated_dens_opV2(energys, states,coefs, init_state:Qobj):
-    """
-    TODO BIGG BOTTLENECK needs to be parellised and look into segmenting !
-    """
+def get_equilibrated_dens_opV2(states,coefs, init_state:Qobj):
+
     return sum(abs(coefs[i])**2*state*state.dag() for i,state in enumerate(states))
 
 
@@ -88,35 +86,26 @@ def ket2dmR(state):
     return Qobj(np.array(state)@np.array(state).T.conjugate(), dims = [[2]*n,[2]*n])
 
 
-"""
-have a look to see if you can work out how many terms are being used may be missing some
-"""
-
 
 @ray.remote
-def eq_terms(energys, states, coefs, start,end):
+def eq_terms(energys, states, coefs, start, end):
     
-    return sum(abs(coefs[i]**2)*ket2dmR(state) for i,state in enumerate(states[start:end]))
+   return sum(abs(coefs[i]**2)*ket2dmR(states[i]) for i in range(start,end))
 
 
+def get_equilibrated_dens_op_P(states, coefs, proc=4):
 
-def get_equilibrated_dens_op_P(energys, states,coefs,proc=4):
-    """
-    TODO BIGG BOTTLENECK needs to be parellised and look into segmenting !
-    """
     number = len(states)//proc
-    
-    e_id = ray.put(energys)
+  
     s_id = ray.put(states)
     c_id = ray.put(coefs)
 
+    results = [eq_terms.remote(s_id,c_id,i*number,(i+1)*number) for i in range(proc-1)]
     
-    """"TO FIX NOT SURE NOT ENOUGH TERMS OBVS try explicitly calculating all terms"""
-    results = [eq_terms.remote(e_id,s_id,c_id,i*number,(i+1)*number) for i in range(proc-1)]
-    
-    results.append(eq_terms.remote(e_id,s_id,c_id,(proc-1)*number,len(states)))
+    results.append(eq_terms.remote(s_id,c_id,(proc-1)*number,len(states)))
 
     results_val = ray.get(results)
+    
     return sum(results_val)
     
 
