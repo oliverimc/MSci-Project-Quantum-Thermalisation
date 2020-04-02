@@ -80,7 +80,7 @@ def get_equilibrated_dens_opV2(states,coefs, init_state:Qobj):
 
     return sum(abs(coefs[i])**2*state*state.dag() for i,state in enumerate(states))
 
-
+#TRY USEING NUMPY>FULL METHOD INSTEAD OF CASTING DIRECTLY INTO AN ARRAY???
 def ket2dmR(state):
     n = len(state.dims[0])
     return Qobj(np.array(state)@np.array(state).T.conjugate(), dims = [[2]*n,[2]*n])
@@ -88,9 +88,9 @@ def ket2dmR(state):
 
 
 @ray.remote
-def eq_terms(energys, states, coefs, start, end):
+def eq_terms(states, coefs, start, end):
     
-   return sum(abs(coefs[i]**2)*ket2dmR(states[i]) for i in range(start,end))
+    return sum(abs(coefs[i]**2)*ket2dmR(states[i]) for i in range(start,end))
 
 
 def get_equilibrated_dens_op_P(states, coefs, proc=4):
