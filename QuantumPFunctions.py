@@ -5,7 +5,7 @@ from qutip.metrics import tracedist
 from qutip import Qobj
 from qutip import *
 from random import sample
-import cupy as cp
+
 import numpy as np 
 from matplotlib import pyplot as plt
 
