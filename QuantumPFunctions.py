@@ -10,7 +10,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-
+from scipy.sparse import csr_matrix
 
 
 
@@ -80,11 +80,9 @@ def get_equilibrated_dens_opV2(states,coefs, init_state:Qobj):
 
     return sum(abs(coefs[i])**2*state*state.dag() for i,state in enumerate(states))
 
-#TRY USEING NUMPY>FULL METHOD INSTEAD OF CASTING DIRECTLY INTO AN ARRAY???
-def ket2dmR(state):
-    n = len(state.dims[0])
-    return Qobj(np.array(state)@np.array(state).T.conjugate(), dims = [[2]*n,[2]*n])
 
+def ket2dmR(state):
+    return csr_matrix(state.data)@csr_matrix(state.data).transpose().conjugate()
 
 
 @ray.remote
@@ -93,7 +91,7 @@ def eq_terms(states, coefs, start, end):
     return sum(abs(coefs[i]**2)*ket2dmR(states[i]) for i in range(start,end))
 
 
-def get_equilibrated_dens_op_P(states, coefs, proc=4):
+def get_equilibrated_dens_op_P(states, coefs, n ,proc=4):
 
     number = len(states)//proc
   
@@ -106,7 +104,7 @@ def get_equilibrated_dens_op_P(states, coefs, proc=4):
 
     results_val = ray.get(results)
     
-    return sum(results_val)
+    return Qobj(sum(results_val), dims = [[2]*n,[2]*n])
     
 
 
