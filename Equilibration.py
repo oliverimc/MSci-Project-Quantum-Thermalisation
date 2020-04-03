@@ -27,15 +27,15 @@ state1 = tensor([basis(2,0)]*n)
 beta1 = lambda n, m: 1
 beta0 = lambda n, m: 0
 
-alpha1 = Heisenberg1dRingGen(-1,1,1,n)
+alpha1 = Heisenberg1dRingGen(-1, 1, 1, n)
 
-H1 = hamiltonian(alpha1,beta0, n)
+H1 = hamiltonian(alpha1, beta0, n)
 H1=H1/H1.norm()
 
-H2 = hamiltonian(alpha1,beta1,n)
+H2 = hamiltonian(alpha1, beta1, n)
 H2 = H2/H2.norm()
 
-H3 = hamiltonian(alpha1,beta0,n)
+H3 = hamiltonian(alpha1, beta0, n)
 H3 = H3/H3.norm()
 
 Pertubation = random_herm_oper(H3.dims)
