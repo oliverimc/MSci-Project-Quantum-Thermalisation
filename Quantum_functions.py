@@ -132,7 +132,7 @@ def gen_random_state(n):
     state = sum(complex(normal(),normal())*vector for vector in basis_vectors(n))
     return state.unit()
 
-def make_hermitian(h: Qobj):
+def make_hermitian(h):
     return 0.5*(h + h.dag())
 
 
