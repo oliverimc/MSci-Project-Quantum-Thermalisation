@@ -3,11 +3,12 @@ from QuantumLib import *
 from sys import argv
 from os import environ
 from time import time
-
+from qutip import tensor
+from qutip.states import basis
 
 
 n = int(argv[1])
-processors = int(argv[0])
+processors = int(argv[2])
 epsilon = 0.1
 
 environ["OMP_NUM_THREADS"] = str(processors) # export OMP_NUM_THREADS=4
@@ -38,7 +39,7 @@ H2 = H2/H2.norm()
 H3 = hamiltonian(alpha1, beta0, n)
 H3 = H3/H3.norm()
 
-Pertubation = random_herm_oper(H3.dims)
+Pertubation = random_herm_oper(H3.dims,n)
 Pertubation = Pertubation/Pertubation.norm()
 
 H3 = H3 + Pertubation
@@ -61,4 +62,4 @@ equilibration_analyser_p(energys3, states3, state1, 0, 1e5, 200, "H3", _proc=pro
 
 end = time()
 
-print(f"Completed taking {end-start} seconds")
+print(f"Completed {n} spins with {processors} processors taking {end-start} seconds")

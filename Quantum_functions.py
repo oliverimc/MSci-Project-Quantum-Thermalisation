@@ -342,7 +342,7 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:in
     ax.set_xlabel(r"Time /$\hbar$s")
     ax.set_ylabel(r"$TrDist(\rho(t),\omega$)")
     plt.legend()
-    plt.show()  
+    plt.savefig("TestOld")
     
     
 

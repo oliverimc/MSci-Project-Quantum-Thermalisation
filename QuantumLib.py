@@ -130,8 +130,7 @@ def make_hermitian(h):
     return 0.5*(h + h.dag())
 
 
-def random_herm_oper(_dims):
-    
+def random_herm_oper(_dims, n):
     return make_hermitian(rand_unitary_haar(2**n, dims =_dims))
 
 
@@ -146,15 +145,15 @@ def eq_terms(states, coefs, start, end):
     return sum(abs(coefs[i]**2)*ket2dmR(states[i]) for i in range(start, end))
 
 
-def get_equilibrated_dens_op_P(states, coefs, n , proc=4):
+def get_equilibrated_dens_op_P(eigstates, coefs, n , proc=4):
 
-    number = len(states)//proc
+    number = len(eigstates)//proc
   
-    s_id = ray.put(states)
+    s_id = ray.put(eigstates)
     c_id = ray.put(coefs)
 
     results = [eq_terms.remote(s_id, c_id, i*number, (i+1)*number) for i in range(proc-1)]
-    results.append(eq_terms.remote(s_id, c_id, (proc-1)*number, len(states)))
+    results.append(eq_terms.remote(s_id, c_id, (proc-1)*number, len(eigstates)))
 
     results_val = ray.get(results)
     
@@ -166,23 +165,23 @@ def phase(t, E):
     return exp(-1j*E*t)
 
 @ray.remote
-def time_step(coef, eigenstates, eigenenergies, func, times, strt, stop):
+def time_step(coef, eigstates, eigenenergies, func, times, strt, stop):
     
     result = []
     
     for time in times[strt:stop]:
-        state = sum(phase(energy, time)*coef[ind]*eigenstates[ind] for ind, energy in enumerate(eigenenergies))
+        state = sum(phase(energy, time)*coef[ind]*eigstates[ind] for ind, energy in enumerate(eigenenergies))
         result.append(func(state))
     
     return result
 
 
-def simulate(energys, states, coef, t_start, t_end, steps, ret_func=lambda x: x, proc=4):
+def simulate(energys, eigstates, coef, t_start, t_end, steps, ret_func=lambda x: x, proc=4):
     
     times = linspace(t_start, t_end, steps)
 
     energys_id = ray.put(energys)
-    states_id = ray.put(states)
+    states_id = ray.put(eigstates)
     coef_id = ray.put(coef)
     times_id = ray.put(times)
 
@@ -196,14 +195,14 @@ def simulate(energys, states, coef, t_start, t_end, steps, ret_func=lambda x: x,
     return list(chain(*results))
     
     
-def equilibration_analyser_p(energys, states, init_state, start, stop, steps, name, trace=[0], _proc=4):
+def equilibration_analyser_p(energys, eigstates, init_state, start, stop, steps, name, trace=[0], _proc=4):
     
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
    
-    coef = [init_state.overlap(state) for state in states]
+    coef = [init_state.overlap(state) for state in eigstates]
                                
-    equilibrated_dens_op = get_equilibrated_dens_op_P(energys, states, coef, init_state)
+    equilibrated_dens_op = get_equilibrated_dens_op_P(eigstates, coef, len(init_state.dims[0]), proc=_proc)
     effective_dimension = eff_dim(equilibrated_dens_op)
     
     #now we have the actual effective dimension trace over as can't do it before or messes up
@@ -214,7 +213,7 @@ def equilibration_analyser_p(energys, states, init_state, start, stop, steps, na
           
     trace_dist_compare = lambda state: tracedist(equilibrated_dens_op, state.ptrace(trace))
     
-    trace_distances = simulate(energys, states, coef, init_state, start, stop, steps, ret_func=trace_dist_compare, proc=_proc)
+    trace_distances = simulate(energys, eigstates, coef, start, stop, steps, ret_func=trace_dist_compare, proc=_proc)
     
     times = [start+step*(stop-start)/steps for step in range(steps)]
     
