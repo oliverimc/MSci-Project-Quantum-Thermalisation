@@ -203,7 +203,7 @@ def energy_trace_comparison(h:Qobj, fraction, d):
     
 
 
-def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0], test= False): 
+def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0], test= False, name ="DefaultName"): 
     
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1) # two rows, one column, first plot
@@ -227,7 +227,7 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:in
     ax.set_xlabel(r"Time /$\hbar$s")
     ax.set_ylabel(r"$TrDist(\rho(t),\omega$)")
     plt.legend()
-    plt.savefig("TestOld")
+    plt.savefig(name)
     
     
 
