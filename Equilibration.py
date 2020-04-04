@@ -5,6 +5,8 @@ from os import environ
 from time import time
 from qutip import tensor
 from qutip.states import basis
+from numpy.linalg import eig as eigenstates
+from numpy import dot 
 
 
 n = int(argv[1])

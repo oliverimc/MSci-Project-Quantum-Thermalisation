@@ -2,7 +2,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-from numpy import linspace, exp, sqrt
+from numpy import linspace, exp, sqrt, dot
 import ray
 from qutip import Qobj, sigmax, sigmay, sigmaz, identity, tensor
 from qutip.metrics import tracedist
@@ -11,7 +11,7 @@ from qutip.random_objects import rand_unitary_haar
 from scipy.sparse import csr_matrix
 
 from itertools import chain, product
-
+from time import time
 sigma = [sigmax(),sigmay(),sigmaz()]
 
 def Heisenberg1dRingGen(Jx, Jy, Jz, N):
@@ -197,13 +197,20 @@ def simulate(energys, eigstates, coef, t_start, t_end, steps, ret_func=lambda x:
     
 def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, name, trace=[0], _proc=4):
     
+    start =time()
     coef = [init_state.overlap(state) for state in eigstates]
 
     n= len(init_state.dims[0])
     subsys_trace = trace
     bath_trace = [ dim for dim in range(n) if dim not in subsys_trace]
+    
+    print("Basics")
+    print(time()-start)
                                
     equilibrated_dens_op = get_equilibrated_dens_op_P(eigstates, coef, n, proc=_proc)
+    
+    print("EqDensOp")
+    print(time()-start)
     
     effective_dimension_sys = eff_dim(equilibrated_dens_op)
     effective_dimension_bath = eff_dim(equilibrated_dens_op.ptrace(bath_trace))
@@ -211,9 +218,15 @@ def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, name, 
     
     equilibrated_dens_op = equilibrated_dens_op.ptrace(subsys_trace)
     
+    print("Tracing")
+    print(time()-start)
+    
     bound_loose = 0.5*sqrt((2**len(subsys_trace))**2/effective_dimension_sys)
     bound_tight = 0.5*sqrt(2**len(subsys_trace)/effective_dimension_bath)
 
+    print("Bounds")
+    print(time()-start)
+    
     trace_dist_compare = lambda state: tracedist(equilibrated_dens_op, state.ptrace(trace))
     trace_distances = simulate(energys, eigstates, coef, start, stop, steps, ret_func=trace_dist_compare, proc=_proc)
     
@@ -225,11 +238,22 @@ def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, name, 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(times, trace_distances, label="Trace-Distance")
+    print("Plot1")
+    print(time()-start)
+    
     ax.plot(times, bound_line_loose, label="Bound-Distance (loose)")
     ax.plot(times, bound_line_tight, label="Bound-Distance (tight)")
+    print("Plot2")
+    print(time()-start)
     plt.title(f"System: effective dimension {effective_dimension_sys:.2f}. Bound) loose:{bound_loose:.2f} tight:{bound_tight:.2f}")
     ax.set_xlabel(r"Time /$\hbar$s")
     ax.set_ylabel(r"$TrDist(\rho(t),\omega$)")
     plt.legend()
     plt.savefig(name)
+    print("Finished")
+    print(time()-start)
     
+    
+    
+    
+
