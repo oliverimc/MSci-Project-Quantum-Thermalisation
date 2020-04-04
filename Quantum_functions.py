@@ -222,7 +222,7 @@ def hamiltonian(alpha,beta,N):
     
 
 
-def energy_trace_comp_2d(h:Qobj, fraction, d, energy_diff =100):
+def energy_trace_comp_2d(h:Qobj, fraction, d):
     
     energys, states = h.eigenstates()
     
@@ -331,7 +331,7 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:in
     
     equilibrated_dens_op = get_equilibrated_dens_op(hamiltonian,init_state)
     effective_dimension = eff_dim(equilibrated_dens_op)
-    bound = 0.5*sqrt(2**len(trace)**2/effective_dimension)
+    bound = 0.5*sqrt((2**len(trace))**2/effective_dimension)
     
     trace_distances = [tracedist(equilibrated_dens_op.ptrace(trace),state.ptrace(trace)) for state in results.states]
     bound_line = [bound for state in results.states]

@@ -142,7 +142,7 @@ def ket2dmR(state):
 @ray.remote
 def eq_terms(states, coefs, start, end):
     
-    return sum(abs(coefs[i]**2)*ket2dmR(states[i]) for i in range(start, end))
+    return sum(abs(coefs[i])**2*ket2dmR(states[i]) for i in range(start, end))
 
 
 def get_equilibrated_dens_op_P(eigstates, coefs, n , proc=4):
@@ -195,7 +195,7 @@ def simulate(energys, eigstates, coef, t_start, t_end, steps, ret_func=lambda x:
     return list(chain(*results))
     
     
-def equilibration_analyser_p(energys, eigstates, init_state, start, stop, steps, name, trace=[0], _proc=4):
+def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, name, trace=[0], _proc=4):
     
     start =time()
     coef = [init_state.overlap(state) for state in eigstates]
@@ -230,10 +230,7 @@ def equilibration_analyser_p(energys, eigstates, init_state, start, stop, steps,
     trace_dist_compare = lambda state: tracedist(equilibrated_dens_op, state.ptrace(trace))
     trace_distances = simulate(energys, eigstates, coef, start, stop, steps, ret_func=trace_dist_compare, proc=_proc)
     
-    print("Simulation")
-    print(time()-start)
-    
-    times = [start+step*(stop-start)/steps for step in range(steps)]
+    times = linspace(0,stop,steps)
     
     bound_line_loose = [bound_loose]*steps
     bound_line_tight = [bound_tight]*steps

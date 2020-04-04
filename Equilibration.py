@@ -58,9 +58,9 @@ energys3, states3 = H3.eigenstates()
 
 
 
-equilibration_analyser_p2(energys1, states1, state1, 0, 1e5, 200, "H1-newvers" , _proc=processors)
-equilibration_analyser_p(energys2, states2, state1, 0, 1e5, 200, "H2", _proc=processors)
-equilibration_analyser_p(energys3, states3, state1, 0, 1e5, 200, "H3", _proc=processors)
+equilibration_analyser_p(energys1, states1, state1, 0, 1e5, 200, f"H1:{n}", _proc=processors)
+equilibration_analyser_p(energys2, states2, state1, 0, 1e5, 200, f"H2:{n}", _proc=processors)
+equilibration_analyser_p(energys3, states3, state1, 0, 1e5, 200, f"H3:{n}", _proc=processors)
 
 end = time()
 
