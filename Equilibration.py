@@ -5,8 +5,7 @@ from os import environ
 from time import time
 from qutip import tensor
 from qutip.states import basis
-from numpy.linalg import eig as eigenstates
-from numpy import dot 
+ 
 
 
 n = int(argv[1])
@@ -22,7 +21,7 @@ environ["NUMEXPR_NUM_THREADS"] = str(processors) # export NUMEXPR_NUM_THREADS=6
 
 ray.init()
 
-start = time()
+start_t = time()
 
 
 state1 = tensor([basis(2,0)]*n)
@@ -30,7 +29,7 @@ state1 = tensor([basis(2,0)]*n)
 beta1 = lambda n, m: 1
 beta0 = lambda n, m: 0
 
-alpha1 = Heisenberg1dRingGen(-1, 1, 1, n)
+alpha1 = Heisenberg1dRingGen(-1, 0.5, 0.1, n)
 
 H1 = hamiltonian(alpha1, beta0, n)
 H1=H1/H1.norm()
@@ -47,21 +46,27 @@ Pertubation = Pertubation/Pertubation.norm()
 H3 = H3 + Pertubation
 H3 = H3/H3.norm()
 
+H4 = Pertubation
+
 
 assert(H1.isherm)
 assert(H2.isherm)
 assert(H3.isherm)
+assert(H4.isherm)
 
 energys1, states1 = H1.eigenstates()
 energys2, states2 = H2.eigenstates()
 energys3, states3 = H3.eigenstates()
+energys4, states4 = H4.eigenstates()
+
+
+equilibration_analyser_p(energys1, states1, state1, 1e5, 200, f"H1-{n}", _proc=processors)
+equilibration_analyser_p(energys2, states2, state1, 1e5, 200, f"H2-{n}", _proc=processors)
+equilibration_analyser_p(energys3, states3, state1, 1e5, 200, f"H3-{n}", _proc=processors)
+equilibration_analyser_p(energys4, states4, state1, 1e5, 200, f"H4-{n}", _proc=processors)
 
 
 
-equilibration_analyser_p(energys1, states1, state1, 0, 1e5, 200, f"H1:{n}", _proc=processors)
-equilibration_analyser_p(energys2, states2, state1, 0, 1e5, 200, f"H2:{n}", _proc=processors)
-equilibration_analyser_p(energys3, states3, state1, 0, 1e5, 200, f"H3:{n}", _proc=processors)
+end_t = time()
 
-end = time()
-
-print(f"Completed {n} spins with {processors} processors taking {end-start} seconds")
+print(f"Completed {n} spins with {processors} processors taking {end_t-start_t} seconds")

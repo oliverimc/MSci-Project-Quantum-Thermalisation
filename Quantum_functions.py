@@ -42,37 +42,7 @@ sqrt2 = sqrt(2)
 #TODO FIX MEMORY ERROR by replacing sum(list) with iteration sum
 #TODO watch system equilibrate
 
-def get_sig_dif_states(H):
-    """
-    Takes a Hamiltonian calcualtes its eigenstates and values
-    then removes any degneracies (chucks away states) and makes sure they are not 
-    within a small distance of each other
-    """
-    
-    val,states = H.eigenstates()
-    pairs = zip(val,states)
-    non_degen_pairs =[]
-    e_seen =[] # what energy values have we seen so far we know to chuck away because seen before => degenerate
-    
-    for e,s in pairs:
-        if e in e_seen:
-            pass
-        
-        else:
-            e_seen.append(e)
-            non_degen_pairs.append((e,s))
 
-    prev = non_degen_pairs[0][0]
-
-    sig_different_pairs =[]
-
-    for energy, state in non_degen_pairs:
-        if(abs(energy-prev)>0.5):
-            sig_different_pairs.append((energy,state))
-            prev = energy
-
-    
-    return sig_different_pairs
     
 def Heisenberg1dRingGen(Jx,Jy,Jz,N):
     
@@ -99,8 +69,6 @@ def Heisenberg1dChainGen(Jx,Jy,Jz,N):
 def random_hamiltonian(n,m,i,j):
     return complex(random(),random())/sqrt(2)
     
-
-
 def basis_vectors(n):
     """
     Generator that yields the basis vectors
@@ -136,28 +104,14 @@ def make_hermitian(h):
     return 0.5*(h + h.dag())
 
 
-
-def ket2dmR(state):
-    n = len(state.dims[0])
-    return Qobj(np.array(state)@np.array(state).T.conjugate(), dims = [[2]*n,[2]*n])
-
-
-
-def max_seperation(h:Qobj):
-    energies = h.eigenenergies()
-    return max([abs(e1-e2) for e1,e2 in product(energies,energies)])
-
 def get_equilibrated_dens_op(hamiltonian:Qobj, init_state:Qobj):
     energys,states = hamiltonian.eigenstates()
-    return sum((abs(state.overlap(init_state)**2)*state*state.dag() for state in states))
+    return sum(abs(state.overlap(init_state))**2*state*state.dag() for state in states)
 
 
 def get_thermal_state(states):
     prob = 1/len(states)
     return prob*sum(state*state.dag() for state in states)
-
-def get_ran_unit_norm_oper(n,_dims):
-    return make_hermitian(rand_unitary(2**n, dims = _dims)) 
 
 
 def hamiltonian_spin_interaction_component(alpha, n, m, i, j, N):
@@ -211,7 +165,7 @@ def hamiltonian(alpha,beta,N):
             beta - specifes how each individual atom interacts with an external field/interaction
             N - number of particles 
 
-    Returns: Hamiltonian Matrix
+    Returns: Hamiltonian MatriHx
     """
 
 
@@ -222,15 +176,13 @@ def hamiltonian(alpha,beta,N):
     
 
 
-def energy_trace_comp_2d(h:Qobj, fraction, d):
+def energy_trace_comparison(h:Qobj, fraction, d):
     
     energys, states = h.eigenstates()
     
     num_energys = len(energys)
     
-    random_indices = sample(range(num_energys),int(num_energys*fraction))
-    
-    energy_states = [(energys[ind],states[ind]) for ind in random_indices]
+    energy_states = list(zip(energys,states))
    
     x_vals =[]
     y_vals =[]
@@ -249,79 +201,9 @@ def energy_trace_comp_2d(h:Qobj, fraction, d):
 
     return x_vals,y_vals 
     
-def energy_trace_relative_n():
-    
-    difference = []
-    n_range = range(5,13)
-    
-    for n in tqdm(n_range):
-        difference.append(0.0)
-        
-        alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
-        beta = lambda n,i :0.1
-        h = hamiltonian(alpha1,beta,n) 
-        h = h + 0.005*get_ran_unit_norm_oper(n,h.dims)
-        
-        energys, states = h.eigenstates()
-        energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
-        band = energy_pairs[:int(len(energy_pairs)/10)]
-        
-        reduced_band = [(pair[0],pair[1].ptrace([0])) for pair in band]
-        counter =0.0
-       
-        
-        for energy_pair1 , energy_pair2 in product(reduced_band,reduced_band):
-            if energy_pair1!=energy_pair2:
-                difference[-1]+=tracedist(energy_pair1[1],energy_pair2[1])
-                counter+=1
-        
-        difference[-1]/=(counter) #look at this seems to be where the problem lies
-   
-    plt.plot(n_range,difference)
-    plt.xlabel("System spin number")
-    plt.ylabel("Average Trace Distance")
-    plt.show()
 
 
-def energy_trace_fixed_n():
-    
-    difference = []
-    n_range = range(5,13)
-    
-    for n in tqdm(n_range):
-        difference.append(0.0)
-        
-        alpha1 = Heisenberg1dChainGen(-1,1/2,0,n)
-        beta = lambda n,i :0.1
-        h = hamiltonian(alpha1,beta,n) 
-        h = h + 0.005*get_ran_unit_norm_oper(n,h.dims)
-        
-        energys, states = h.eigenstates()
-        energy_pairs = sorted([(energy,state) for energy,state in zip(energys,states)], key = lambda x : x[0])
-        band = energy_pairs[:20]
-        
-        reduced_band = [(pair[0],pair[1].ptrace([0])) for pair in band]
-        counter =0.0
-        
-
-        for energy_pair1 , energy_pair2 in product(reduced_band,reduced_band):
-            if energy_pair1!=energy_pair2:
-                difference[-1]+=tracedist(energy_pair1[1],energy_pair2[1])
-                counter+=1.0
-        
-        
-        difference[-1]/=counter
-            
-                        
-   
-    plt.plot(n_range,difference)
-    plt.xlabel("System spin number")
-    plt.ylabel("Average Trace Distance")
-    plt.show()
-
-
-
-def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0]): 
+def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:int, trace=[0], test= False, name ="DefaultName"): 
     
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1) # two rows, one column, first plot
@@ -336,13 +218,16 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:in
     trace_distances = [tracedist(equilibrated_dens_op.ptrace(trace),state.ptrace(trace)) for state in results.states]
     bound_line = [bound for state in results.states]
     
+    if test:
+        return times, trace_distances
+    
     ax.plot(times,trace_distances,label="Trace-Distance")
     ax.plot(times,bound_line,label="Bound-Distance")
     plt.title(f"System: effective dimension {effective_dimension:.2f} and bound {bound:.2f} ")
     ax.set_xlabel(r"Time /$\hbar$s")
     ax.set_ylabel(r"$TrDist(\rho(t),\omega$)")
     plt.legend()
-    plt.savefig("TestOld")
+    plt.savefig(name)
     
     
 
