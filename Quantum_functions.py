@@ -231,7 +231,7 @@ def equilibration_analyser(hamiltonian:Qobj, init_state:Qobj, time:int, steps:in
     
     
 
-def energy_band_plot(hamiltonian,title_text):
+def energy_band_plot(hamiltonian,title_text, filename):
     energys = hamiltonian.eigenenergies()
     energys_count = Counter(energys)
     
@@ -265,7 +265,7 @@ def energy_band_plot(hamiltonian,title_text):
     ax.axes.get_xaxis().set_visible(False)
     ax.set_xlim([-5,15])
     plt.title(title_text)
-    plt.show()
+    plt.savefig(filename)
 
 
 def thermalisation_analyser(equilibrated_dens_op , band, trace=[0]): 

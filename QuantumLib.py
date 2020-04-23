@@ -1,5 +1,5 @@
-#import matplotlib as mpl
-#mpl.use('Agg')
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 from numpy import linspace, exp, sqrt, dot
@@ -10,6 +10,7 @@ from qutip.states import basis
 from qutip.random_objects import rand_unitary_haar
 from scipy.sparse import csr_matrix
 from random import sample
+from pickle import dump
 
 from itertools import chain, product
 from time import time
@@ -295,6 +296,12 @@ def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, name, 
     bound_line_loose = [bound_loose]*steps
     bound_line_tight = [bound_tight]*steps
     
+    dump(times,open(f"{name}-times.pick","wb"))
+    dump(trace_distances,open(f"{name}-trdist.pick","wb"))
+    print(f"Loose bound {bound_loose}| Tight Bound {bound_tight}")
+
+
+
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(times, trace_distances, label="Trace-Distance")
