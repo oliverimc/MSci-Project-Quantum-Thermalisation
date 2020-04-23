@@ -1,19 +1,27 @@
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
+from collections import Counter
+from random import sample
+from pickle import dump
+from itertools import chain, product
+from time import time
 
-from numpy import linspace, exp, sqrt, dot
-import ray
 from qutip import Qobj, sigmax, sigmay, sigmaz, identity, tensor
 from qutip.metrics import tracedist
 from qutip.states import basis
 from qutip.random_objects import rand_unitary_haar
 from scipy.sparse import csr_matrix
-from random import sample
-from pickle import dump
 
-from itertools import chain, product
-from time import time
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+from numpy import linspace, exp, sqrt, dot
+import ray
+
+
+
+
+
 sigma = [sigmax(),sigmay(),sigmaz()]
 
 
@@ -320,3 +328,38 @@ def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, name, 
     
     
 
+def energy_band_plot(hamiltonian,title_text, filename):
+    energys = hamiltonian.eigenenergies()
+    energys_count = Counter(energys)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1) # two rows, one column, first plot
+
+    max_energy = max(energys)
+    min_energy = min(energys)
+    degeneracy = False
+    
+    text_shift = (max_energy-min_energy)/100
+    
+    for energy, degen in energys_count.items():
+        color_val = 'b' if degen ==1 else "r"
+        
+        if degen >1 :
+            ax.plot(linspace(0,9.3,20),[energy for i in linspace(0,9.3,20)], color = color_val)
+            ax.text(9.4,energy-text_shift,f"Degen: {degen} fold")
+            degeneracy = True
+        else:
+            ax.plot(range(10),[energy for i in range(10)], color = color_val)
+
+
+    
+    degen_patch = mpatches.Patch(color='red', label='Degenerate level')
+    norm_patch = mpatches.Patch(color='blue', label='Non-Degenerate level')
+    patches = [degen_patch, norm_patch] if degeneracy else [norm_patch]
+    plt.legend(handles=patches, loc= "center left")
+    ax.set_ylabel("Normalized energy value")
+    
+    ax.axes.get_xaxis().set_visible(False)
+    ax.set_xlim([-5,15])
+    plt.title(title_text)
+    plt.savefig(filename)
