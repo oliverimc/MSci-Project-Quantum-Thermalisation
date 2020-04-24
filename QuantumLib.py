@@ -11,7 +11,7 @@ from qutip.random_objects import rand_unitary_haar
 from scipy.sparse import csr_matrix
 
 import matplotlib as mpl
-mpl.use('Agg')
+#mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
@@ -272,7 +272,7 @@ def simulate(energys, eigstates, coef, t_start, t_end, steps, ret_func=lambda x:
     return list(chain(*results))
     
     
-def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, name, trace=[0], _proc=4, test = False):
+def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, trace=[0], _proc=4):
     
     coef = [init_state.overlap(state) for state in eigstates]
 
@@ -298,30 +298,16 @@ def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, name, 
     times = linspace(0,stop,steps)
     
     
-    if test:
-        return times,trace_distances
+    return times, trace_distances, bound_loose, bound_tight
     
-    bound_line_loose = [bound_loose]*steps
-    bound_line_tight = [bound_tight]*steps
     
-    dump(times,open(f"{name}-times.pick","wb"))
-    dump(trace_distances,open(f"{name}-trdist.pick","wb"))
-    print(f"Loose bound {bound_loose}| Tight Bound {bound_tight}")
-
-
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(times, trace_distances, label="Trace-Distance")
     
-    ax.plot(times, bound_line_loose, label="Bound-Distance (loose)")
-    ax.plot(times, bound_line_tight, label="Bound-Distance (tight)")
+    #dump(times,open(f"{name}-times.pick","wb"))
+    #dump(trace_distances,open(f"{name}-trdist.pick","wb"))
+    #print(f"Loose bound {bound_loose}| Tight Bound {bound_tight}")
 
-    plt.title(f"System: effective dimension {effective_dimension_sys:.2f}. Bound loose:{bound_loose:.2f} tight:{bound_tight:.2f}")
-    ax.set_xlabel(r"Time /$\hbar$s")
-    ax.set_ylabel(r"$TrDist(\rho(t),\omega$)")
-    plt.legend()
-    plt.savefig(name)
+
+   
     
     
     
@@ -345,21 +331,23 @@ def energy_band_plot(hamiltonian,title_text, filename):
         color_val = 'b' if degen ==1 else "r"
         
         if degen >1 :
-            ax.plot(linspace(0,9.3,20),[energy for i in linspace(0,9.3,20)], color = color_val)
+            ax.plot(range(10),[energy for i in range(10)], color = color_val, linewidth=1)
             ax.text(9.4,energy-text_shift,f"Degen: {degen} fold")
             degeneracy = True
         else:
-            ax.plot(range(10),[energy for i in range(10)], color = color_val)
+            ax.plot(range(10),[energy for i in range(10)], color = color_val,linewidth=1)
 
 
     
     degen_patch = mpatches.Patch(color='red', label='Degenerate level')
     norm_patch = mpatches.Patch(color='blue', label='Non-Degenerate level')
     patches = [degen_patch, norm_patch] if degeneracy else [norm_patch]
-    plt.legend(handles=patches, loc= "center left")
-    ax.set_ylabel("Normalized energy value")
+    plt.legend(handles=patches, bbox_to_anchor=(0.5, -0.05), loc="upper center", ncol=2)
+    ax.set_ylabel("Normalised energy value",fontsize=14)
+    ax.tick_params(axis='y', labelsize=14)
     
     ax.axes.get_xaxis().set_visible(False)
     ax.set_xlim([-5,15])
     plt.title(title_text)
-    plt.savefig(filename)
+    plt.gcf().subplots_adjust(left=0.25)
+    plt.savefig(filename,dpi=400)
