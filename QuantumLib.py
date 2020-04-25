@@ -297,6 +297,7 @@ def equilibration_analyser_p(energys, eigstates, init_state, stop, steps, trace=
     
     times = linspace(0,stop,steps)
     
+    print(f"Effective dimension of system: {effective_dimension_sys}")
     
     return times, trace_distances, bound_loose, bound_tight
     
